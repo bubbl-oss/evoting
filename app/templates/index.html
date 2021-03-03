@@ -3,5 +3,32 @@
 {% block content %}
 <div>
     <h4>This is the home page!</h4>
+
+    {% if current_user.is_authenticated %}
+    <h3>Upcoming elections</h3>
+
+    <table>
+        <thead>
+            <th>
+                Id
+            </th>
+            <th>
+                Name
+            </th>
+            <th>
+                Status
+            </th>
+        </thead>
+        {% for election in elections %}
+        <tr>
+            <td>
+                {{ election.id }}
+            </td>
+            <td>{{ election.name_of_election }}</td>
+            <td>{{ election.status }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
 </div>
 {% endblock %}

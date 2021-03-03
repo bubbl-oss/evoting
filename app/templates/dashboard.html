@@ -2,6 +2,31 @@
 
 {% block content %}
 <div>
-    <h4>Hello, {{ current_user.email }} </h4>
+    <h2>Hello, {{ current_user.email }} </h2>
+
+    <h3>Your elections</h3>
+
+    <table>
+        <thead>
+            <th>
+                Id
+            </th>
+            <th>
+                Name
+            </th>
+            <th>
+                Status
+            </th>
+        </thead>
+        {% for election in elections %}
+        <tr>
+            <td>
+                {{ election.id }}
+            </td>
+            <td>{{ election.name_of_election }}</td>
+            <td>{{ election.status }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 </div>
 {% endblock %}

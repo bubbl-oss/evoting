@@ -6,7 +6,14 @@ from app.models import User
 
 @app.route("/")
 def index():
-    return render_template("index.html", title="Home Page")
+    elections = [
+        {"id": 1, "name_of_election": "SGA 2021", "status": "Not Started"},
+        {"id": 2, "name_of_election": "MSS Spring Leadership", "status": "Not Started"},
+        {"id": 3, "name_of_election": "Honor Society", "status": "Not Started"},
+        {"id": 4, "name_of_election": "Finest Boy", "status": "Not Started"}
+
+    ]
+    return render_template("index.html", title="Home Page", elections=elections)
 
 
 @app.route("/login-complete")
@@ -33,14 +40,26 @@ def login_complete():
     return redirect(url_for('dashboard'))
 
 
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    elections = [
+        {"id": 1, "name_of_election": "SGA 2021", "status": "Not Started"},
+        {"id": 2, "name_of_election": "MSS Spring Leadership", "status": "Not Started"},
+        {"id": 3, "name_of_election": "Honor Society", "status": "Not Started"},
+        {"id": 4, "name_of_election": "Finest Boy", "status": "Not Started"}
+
+    ]
+    return render_template("dashboard.html", title="User Dashboard", elections=elections)
+
+
+@app.route("/create-election")
+def create_election():
+    return render_template("create_election.html", title="Create Election")
+
+
 @app.route("/logout-complete")
 def logout_complete():
     # TODO: STILL TEMPORARY
     logout_user()
     return render_template("logout_complete.html", title="Logout Complete Page")
-
-
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    return render_template("dashboard.html", title="User Dashboard")
