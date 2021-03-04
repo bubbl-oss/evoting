@@ -32,7 +32,7 @@ class Candidate(db.Model):
     position = db.Column(db.String(200), nullable=False)
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id'), nullable=False)
-    vote = db.relationship('Vote', backref='candidates', lazy='dynamic')
+    vote = db.relationship('Vote', backref='candidate', lazy='dynamic')
 
     def __repr__(self):
         return f'<Candidate {self.name}>'

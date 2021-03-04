@@ -59,27 +59,26 @@ def create_election():
     # if user is authenticated, make the owner of the election the current logged in user
     # if the user is not authenticated, redirect the user to the login page
     if current_user.is_authenticated:
-        owner = Election(owner=current_user.id)
+        form = ElectionForm()
+        if form.validate_on_submit:
+            if form.password.data is not None:
+                election = Election(owner=current_user.id, name_of_election=form.name_of_election.data, 
+                                    date_of_election=form.date_of_election.data, 
+                                    time_of_election=form.time_of_election.data,
+                                    status=form.status.data, number_of_voters=form.number_of_voters.data, 
+                                    password=form.password.data)
+                db.session.add(election)
+                db,session.commit()
+            else:
+                election = Election(owner=current_user.id, name_of_election=form.name_of_election.data, 
+                                    date_of_election=form.date_of_election.data, 
+                                    time_of_election=form.time_of_election.data,
+                                    status=form.status.data, number_of_voters=form.number_of_voters.data)
+                db.session.add(election)
+                db,session.commit()
+        return redirect(url_for('election_url'))
     else:
         return redirect(url_for('index'))
-    form = ElectionForm()
-    if form.validate_on_submit:
-        if form.password.data is not None:
-            election = Election(owner=owner, name_of_election=form.name_of_election.data, 
-                                date_of_election=form.date_of_election.data, 
-                                time_of_election=form.time_of_election.data,
-                                status=form.status.data, number_of_voters=form.number_of_voters.data, 
-                                password=form.password.data)
-            db.session.add(election)
-            db,session.commit()
-        else:
-            election = Election(owner=owner, name_of_election=form.name_of_election.data, 
-                                date_of_election=form.date_of_election.data, 
-                                time_of_election=form.time_of_election.data,
-                                status=form.status.data, number_of_voters=form.number_of_voters.data)
-            db.session.add(election)
-            db,session.commit()
-        return redirect(url_for('election_url'))
     return render_template("create_election.html", title="Create Election", form=form)
 
 
