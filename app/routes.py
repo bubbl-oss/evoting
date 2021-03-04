@@ -1,7 +1,8 @@
 from app import app, db
-from flask import render_template, request, url_for, redirect
+from flask import render_template, request, url_for, redirect, abort
 from flask_login import login_user, login_required, logout_user
 from app.models import User
+from app.forms import ElectionForm
 
 
 @app.route("/")
@@ -45,7 +46,7 @@ def login_complete():
 def dashboard():
     elections = [
         {"id": 1, "name_of_election": "SGA 2021", "status": "Not Started"},
-        {"id": 2, "name_of_election": "MSS Spring Leadership", "status": "Not Started"},
+        {"id": 2, "name_of_election": "MSS Spring Leadership", "status": "Started"},
         {"id": 3, "name_of_election": "Honor Society", "status": "Not Started"},
         {"id": 4, "name_of_election": "Finest Boy", "status": "Not Started"}
 
@@ -53,10 +54,70 @@ def dashboard():
     return render_template("dashboard.html", title="User Dashboard", elections=elections)
 
 
-@app.route("/create-election")
+@app.route("/create-election", methods=['GET', 'POST'])
 def create_election():
-    return render_template("create_election.html", title="Create Election")
+    # if user is authenticated, make the owner of the election the current logged in user
+    # if the user is not authenticated, redirect the user to the login page
+    if current_user.is_authenticated:
+        owner = Election(owner=current_user.id)
+    else:
+        return redirect(url_for('index'))
+    form = ElectionForm()
+    if form.validate_on_submit:
+        if form.password.data is not None:
+            election = Election(owner=owner, name_of_election=form.name_of_election.data, 
+                                date_of_election=form.date_of_election.data, 
+                                time_of_election=form.time_of_election.data,
+                                status=form.status.data, number_of_voters=form.number_of_voters.data, 
+                                password=form.password.data)
+            db.session.add(election)
+            db,session.commit()
+        else:
+            election = Election(owner=owner, name_of_election=form.name_of_election.data, 
+                                date_of_election=form.date_of_election.data, 
+                                time_of_election=form.time_of_election.data,
+                                status=form.status.data, number_of_voters=form.number_of_voters.data)
+            db.session.add(election)
+            db,session.commit()
+        return redirect(url_for('election_url'))
+    return render_template("create_election.html", title="Create Election", form=form)
 
+
+@app.route("/election/<int:election_id>")
+def election(election_id):
+    election = Election.query.get_or_404(election_id)
+    return render_template('election.html', title=election.name_of_election, election=election)
+
+
+@app.route("/election/<int:election_id>/update", methods=['GET', 'POST'])
+def update_election(election_id):
+    election = Election.query.get_or_404(election_id)
+    if election.owner != current_user:
+        abort(403)
+    form = ElectionForm()
+    if form.validate_on_submit():
+        election.name_of_election = form.name_of_election.data
+        election.date_of_election = form.date_of_election.data 
+        election.time_of_election = form.time_of_election.data
+        election.status = form.status.data
+        election.number_of_voters = form.number_of_voters.data
+        election.password = form.password.data
+        db.session.commit()
+        return redirect(url_for('election_url', election_id=election_id))
+
+    elif request.method == 'GET':
+        form.name_of_election.data = election.name_of_election
+        form.date_of_election.data = election.date_of_election
+        form.time_of_election.data = election.time_of_election
+        form.status.data = election.status
+        form.number_of_voters.data = election.number_of_voters
+        form.password.data = election.password
+    return render_template("update_election.html", title="Update Election", form=form)
+
+
+@app.route("/voting-link")
+def election_url():
+    return render_template('election_url.html', title="Election Url")
 
 @app.route("/logout-complete")
 def logout_complete():

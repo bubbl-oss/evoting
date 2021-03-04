@@ -13,6 +13,7 @@ flask-wtf = "*"
 flask-sqlalchemy = "*"
 flask-login = "*"
 flask-migrate = "*"
+flask-admin = "*"
 
 [requires]
 python_version = "3.7"
