@@ -5,20 +5,20 @@ from datetime import datetime
 
 class Type(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_type = db.Column(db.String())
+    name = db.Column(db.String())  # name of type
     user = db.relationship('User', backref='type', lazy='dynamic')
 
     def __repr__(self):
-        return f'<User {self.user_type}>'
+        return f'<Type {self.name}>'
 
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    user_type = db.Column(db.Integer, db.ForeignKey('type.id'), nullable=False)
+    type_id = db.Column(db.Integer, db.ForeignKey('type.id'), nullable=False)
     verified = db.Column(db.Boolean)
-    election = db.relationship('Election', backref='user', lazy='dynamic')
-    vote = db.relationship('Vote', backref='user', lazy='dynamic')
+    elections = db.relationship('Election', backref='owner', lazy='dynamic')
+    votes = db.relationship('Vote', backref='user', lazy='dynamic')
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -27,12 +27,12 @@ class User(UserMixin, db.Model):
 class Candidate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False, index=True)
-    image = db.Column(db.String(), nullable=False)
+    image = db.Column(db.String())  # should be nullable tbh
     bio = db.Column(db.Text)
-    position = db.Column(db.String(200), nullable=False)
+    position = db.Column(db.String(200))  # should be nullable
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id'), nullable=False)
-    vote = db.relationship('Vote', backref='candidates', lazy='dynamic')
+    votes = db.relationship('Vote', backref='candidate', lazy='dynamic')
 
     def __repr__(self):
         return f'<Candidate {self.name}>'
@@ -40,37 +40,38 @@ class Candidate(db.Model):
 
 class Status(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.String(), nullable=False)
+    name = db.Column(db.String(), nullable=False)
     election = db.relationship('Election', backref='status', lazy='dynamic')
 
     def __repr__(self):
-        return f'<Status {self.status}>'
+        return f'<Status {self.name}>'
 
 
 class Election(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    owner = db.Column(db.Integer, db.ForeignKey('user.id'))
-    name_of_election = db.Column(db.String(), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    name = db.Column(db.String(), nullable=False, index=True)
     description = db.Column(db.String())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     modified_at = db.Column(db.DateTime, default=datetime.utcnow)
-    date_of_election = db.Column(db.DateTime)
-    time_of_election = db.Column(db.DateTime)
+    date_of_election = db.Column(db.DateTime, index=True)
+    time_of_election = db.Column(db.DateTime, index=True)
     link = db.Column(db.String())
     status_id = db.Column(db.Integer, db.ForeignKey(
         'status.id'), nullable=False)
     number_of_voters = db.Column(db.String(), nullable=False)
     password = db.Column(db.String())
-    candidate = db.relationship('Candidate', backref='election', lazy='dynamic')
-    vote = db.relationship('Vote', backref='election', lazy='dynamic')
+    candidates = db.relationship(
+        'Candidate', backref='election', lazy='dynamic')
+    votes = db.relationship('Vote', backref='election', lazy='dynamic')
 
     def __repr__(self):
-        return f'<Election {self.name_of_election}>'
+        return f'<Election {self.name}>'
 
 
 class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.ForeignKey('user.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id'), nullable=False)
     candidate_id = db.Column(db.Integer, db.ForeignKey(

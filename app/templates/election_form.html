@@ -1,0 +1,68 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<h1> {{ 'Update' if request.endpoint == 'update_election' else 'Create' }} Election</h1>
+<form action="" method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.name.label }}<br>
+        {{ form.name(size=48) }}<br>
+        {% for error in form.name.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.description.label }}<br>
+        {{ form.description(size=140) }}<br>
+        {% for error in form.description.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        Date<br>
+        {{ form.date_of_election(class='select_date') }}<br>
+        {% for error in form.date_of_election.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        Time<br>
+        {{ form.time_of_election(type='time', class='select_time') }}<br>
+        {% for error in form.time_of_election.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <!-- Render the status field if this is an update... -->
+    <p>
+        {{ form.number_of_voters.label }}<br>
+        {{ form.number_of_voters() }}<br>
+        {% for error in form.number_of_voters.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <hr>
+    <h4>Candidates</h4>
+    <!-- <button onclick="add_candidate()" type="button">Add candidate</button> -->
+    <p>
+        {{ form.candidates.label }}<br>
+        {{ form.candidates() }}<br>
+        {% for error in form.candidates.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.password.label }}<br>
+        {{ form.password(size=10) }}<br>
+        {% for error in form.password.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>{{ form.submit() }}</p>
+
+    {% for field, errors in form.errors.items() %}
+    <div class="alert alert-error">
+        {{ form[field].label }}: {{ ', '.join(errors) }}
+    </div>
+    {% endfor %}
+</form>
+{% endblock %}

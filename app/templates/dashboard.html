@@ -3,10 +3,15 @@
 {% block content %}
 <div>
     <h2>Hello, {{ current_user.email }} </h2>
+    <ul>
+        <li><a href="{{ url_for('create_election') }}">Create new Election</a></li>
+
+    </ul>
 
     <h3>Your elections</h3>
 
-    <table>
+    {% if elections %}
+    <table style="border: 1px solid gold">
         <thead>
             <th>
                 Id
@@ -17,16 +22,14 @@
             <th>
                 Status
             </th>
+            <th>
+                Actions
+            </th>
         </thead>
         {% for election in elections %}
-        <tr>
-            <td>
-                {{ election.id }}
-            </td>
-            <td>{{ election.name_of_election }}</td>
-            <td>{{ election.status }}</td>
-        </tr>
+        {% include "partials/election_record.html" %}
         {% endfor %}
     </table>
+    {% endif %}
 </div>
 {% endblock %}
