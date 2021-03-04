@@ -1,0 +1,35 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div>
+    <h2>Hello, {{ current_user.email }} </h2>
+    <ul>
+        <li><a href="{{ url_for('create_election') }}">Create new Election</a></li>
+
+    </ul>
+
+    <h3>Your elections</h3>
+
+    {% if elections %}
+    <table style="border: 1px solid gold">
+        <thead>
+            <th>
+                Id
+            </th>
+            <th>
+                Name
+            </th>
+            <th>
+                Status
+            </th>
+            <th>
+                Actions
+            </th>
+        </thead>
+        {% for election in elections %}
+        {% include "partials/election_record.html" %}
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+<tr>
+    <td>
+        {{ election.id }}
+    </td>
+    <td>{{ election.name }}</td>
+    <td>{{ election.status.name }}</td>
+    <td>
+        {%if election.owner.id == current_user.id %}
+        <a href="{{ url_for('update_election', link=election.link)  }}">Edit</a>
+        {% endif %}
+
+        <a href="{{ url_for('election', link=election.link) }}">View</a>
+    </td>
+</tr>

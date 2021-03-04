@@ -1,0 +1,36 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div>
+    <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
+    <h4> Created by: {{ election.owner.email }} </h4>
+    <h3>Created: {{ election.created_at }} </h3>
+
+    <h3>Scheduled for: {{ election.date_of_election }} at {{ election.time_of_election }} </h3>
+
+    {% if election.candidates %}
+    <h4>Candidates</h4>
+    <table style="border: 1px solid green">
+        <thead>
+            <th>
+                Name
+            </th>
+            <th>
+                Bio
+            </th>
+        </thead>
+        {% for c in election.candidates %}
+        <tr>
+            <td>
+                {{ c.name }}
+            </td>
+            <td>{{ c.bio }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+    <p>
+        {{ election.description or 'No description' }}
+    </p>
+</div>
+{% endblock %}
