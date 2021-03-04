@@ -4,10 +4,10 @@
 <div>
     <h4>This is the home page!</h4>
 
-    {% if current_user.is_authenticated %}
+    {% if current_user.is_authenticated and elections %}
     <h3>Upcoming elections</h3>
 
-    <table>
+    <table style="border: 1px solid gold">
         <thead>
             <th>
                 Id
@@ -18,15 +18,12 @@
             <th>
                 Status
             </th>
+            <th>
+                Action
+            </th>
         </thead>
         {% for election in elections %}
-        <tr>
-            <td>
-                {{ election.id }}
-            </td>
-            <td>{{ election.name_of_election }}</td>
-            <td>{{ election.status }}</td>
-        </tr>
+        {% include "partials/election_record.html" %}
         {% endfor %}
     </table>
     {% endif %}

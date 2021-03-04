@@ -70,6 +70,33 @@
                 });
         };
     </script>
+
+    {% if request.endpoint == 'create_election' %}
+    <script>
+        window.onload = function () { console.log('Create Elecion page loaded!') };
+        /** let last_candidate_index = 1;
+
+        function create_new_candidate_block() {
+            let new_index = last_candidate_index + 1;
+            return `
+            <li><button style="position:relative;color:red" onclick="remove_candidate(this.parentElement)">x</button> <label for="candidates-${new_index}">Candidates-${new_index}</label> <table id="candidates-${new_index}"><tbody><tr><th><label for="candidates-${new_index}-name">Name</label></th><td><input id="candidates-${new_index}-name" name="candidates-${new_index}-name" type="text" value=""></td></tr><tr><th><label for="candidates-${new_index}-description">Description</label></th><td><textarea id="candidates-${new_index}-description" name="candidates-${new_index}-description"></textarea></td></tr></tbody></table>
+            </li>`
+        }
+
+        function add_candidate() {
+            const c = document.getElementById('candidates');
+            c.insertAdjacentHTML('beforeend', create_new_candidate_block());
+            last_candidate_index++;
+            console.log('Added candidate succssfully!');
+        }
+
+        function remove_candidate(candidate_el) {
+            candidate_el.parentElement.removeChild(candidate_el);
+            console.log('Removed candidate succssfully!');
+        } */
+    </script>
+    {% endif %}
+
 </body>
 
 </html>
