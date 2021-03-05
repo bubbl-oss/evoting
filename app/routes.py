@@ -1,11 +1,20 @@
 from datetime import datetime, time
+
+from sqlalchemy.orm import query
 from app import app, db
 import json
 import uuid
-from flask import render_template, request, url_for, redirect, abort
+from flask import render_template, request, url_for, redirect, abort, jsonify
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate
-from app.forms import ElectionForm
+from app.forms import ElectionForm, status
+
+
+def to_json_array(collection):
+    list = []
+    for item in collection:
+        list.append(item.as_dict())
+    return list
 
 
 @app.route("/")
@@ -53,7 +62,7 @@ def create_election():
     # if the user is not authenticated, redirect the user to the login page
 
     # form = ElectionForm()
-    form = ElectionForm(request.form)
+    form = ElectionForm()
     if form.validate_on_submit():
         pending_status = Status.query.get(1)
         random_link = uuid.uuid4()
@@ -86,7 +95,9 @@ def election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
         return redirect(url_for('404.html'))
-    return render_template('election.html', title=election.name, election=election)
+    if election.owner.id == current_user.id:
+        statuses = Status.query.all()
+    return render_template('election.html', title=election.name, election=election, statuses=statuses)
 
 
 @app.route("/election/<link>/update", methods=['GET', 'POST'])
@@ -102,7 +113,6 @@ def update_election(link):
         election.name = form.name.data
         election.date_of_election = form.date_of_election.data
         election.time_of_election = form.time_of_election.data
-        election.status = form.status.data
         election.number_of_voters = form.number_of_voters.data
         election.password = form.password.data
         db.session.commit()
@@ -112,16 +122,48 @@ def update_election(link):
         form.name.data = election.name
         form.date_of_election.data = election.date_of_election
         form.time_of_election.data = election.time_of_election
-        # form.status.data = election.status TODO: find a way to add this to the election_form
         form.number_of_voters.data = election.number_of_voters
         form.password.data = election.password
         # TODO: render candidates too
-    return render_template("election_form.html", title="Update Election", form=form)
+        candidates = to_json_array(election.candidates.all())
+
+    return render_template("election_form.html", title="Update Election", form=form, candidates=json.dumps(candidates))
+
+
+@app.route("/election/<link>/change-status", methods=['POST'])
+def change_election_status(link):
+    if not current_user.is_authenticated:
+        redirect(url_for('index'))
+
+    election = Election.query.filter_by(link=link).first_or_404()
+
+    if election.owner != current_user:
+        return redirect(url_for('index'))
+
+    status_index = request.form.get('status')
+
+    if status_index is None:
+        return redirect(url_for('404'))
+
+    status = Status.query.get(status_index)
+
+    election.status = status
+    db.session.commit()
+
+    # Add flash message here...
+
+    return redirect(url_for('election', link=election.link))
 
 
 @app.route("/voting-link")
 def election_url():
     return render_template('election_url.html', title="Election Url")
+
+
+@app.route("/statuses")
+def get_statuses():
+    cs = Election.query.get(1)
+    return jsonify(cs.as_dict())
 
 
 @app.route("/logout-complete")

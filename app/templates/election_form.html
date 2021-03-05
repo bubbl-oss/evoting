@@ -19,17 +19,13 @@
         {% endfor %}
     </p>
     <p>
-        Date<br>
-        {{ form.date_of_election(class='select_date') }}<br>
+        Date and Time<br>
+        {{ form.date_of_election(class='select_date') }} {{ form.time_of_election(type='time', class='select_time') }}
         {% for error in form.date_of_election.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;display: block">[{{ error }}]</span>
         {% endfor %}
-    </p>
-    <p>
-        Time<br>
-        {{ form.time_of_election(type='time', class='select_time') }}<br>
         {% for error in form.time_of_election.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;display: block;">[{{ error }}]</span>
         {% endfor %}
     </p>
     <!-- Render the status field if this is an update... -->
@@ -44,12 +40,20 @@
     <h4>Candidates</h4>
     <!-- <button onclick="add_candidate()" type="button">Add candidate</button> -->
     <p>
-        {{ form.candidates.label }}<br>
         {{ form.candidates() }}<br>
         {% for error in form.candidates.errors %}
         <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
     </p>
+
+    <!-- Candidates should be here tho -->
+    <div x-data="{ candidates: {{ candidates }} }">
+        <ul>
+            <template x-for="(c, i) in candidates" :key="i">
+                <li x-text="c.name"></li>
+            </template>
+        </ul>
+    </div>
     <p>
         {{ form.password.label }}<br>
         {{ form.password(size=10) }}<br>
