@@ -1,9 +1,14 @@
+from dataclasses import dataclass
 from app import db, login
 from flask_login import UserMixin
 from datetime import datetime
 
 
+# @dataclass(init=False)
 class Type(db.Model):
+    # id: int
+    # name: str
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String())  # name of type
     user = db.relationship('User', backref='type', lazy='dynamic')
@@ -11,8 +16,16 @@ class Type(db.Model):
     def __repr__(self):
         return f'<Type {self.name}>'
 
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
+
 
 class User(UserMixin, db.Model):
+    # id: int
+    # email: str
+    # verified: bool
+    # type: Type
+
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     type_id = db.Column(db.Integer, db.ForeignKey('type.id'), nullable=False)
@@ -23,6 +36,7 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.email}>'
 
+<<<<<<< HEAD
 
 class Candidate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -32,13 +46,24 @@ class Candidate(db.Model):
     position = db.Column(db.String(200))  # should be nullable
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id'), nullable=False)
+<<<<<<< HEAD
+    vote = db.relationship('Vote', backref='candidate', lazy='dynamic')
+=======
     votes = db.relationship('Vote', backref='candidate', lazy='dynamic')
+>>>>>>> 72aae7a1e5e0973c55a61977d69135be2dcad0b6
 
     def __repr__(self):
         return f'<Candidate {self.name}>'
+=======
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
+>>>>>>> dac5e437c6a00c8df029b2f4a0c40084fbdb5376
 
 
 class Status(db.Model):
+    # id: int
+    # name: str
+
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
     election = db.relationship('Election', backref='status', lazy='dynamic')
@@ -46,8 +71,25 @@ class Status(db.Model):
     def __repr__(self):
         return f'<Status {self.name}>'
 
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
+
 
 class Election(db.Model):
+    # id: int
+    # name: str
+    # description: str
+    # created_at: datetime
+    # modified_at: datetime
+    # owner: User.id
+    # date_of_election: datetime
+    # time_of_election: datetime
+    # link: str
+    # status: Status
+    # number_of_voters: str
+    # password: str
+
+    # --- #
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     name = db.Column(db.String(), nullable=False, index=True)
@@ -68,8 +110,33 @@ class Election(db.Model):
     def __repr__(self):
         return f'<Election {self.name}>'
 
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
 
+
+class Candidate(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False, index=True)
+    image = db.Column(db.String())  # should be nullable tbh
+    bio = db.Column(db.Text)
+    position = db.Column(db.String(200))  # should be nullable
+    election_id = db.Column(db.Integer, db.ForeignKey(
+        'election.id'), nullable=False)
+    votes = db.relationship('Vote', backref='candidate', lazy='dynamic')
+
+    def __repr__(self):
+        return f'<Candidate {self.name}>'
+
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
+
+
+# @dataclass(init=False)
 class Vote(db.Model):
+    # id: int
+    # election: Election.id
+    # candidate: Candidate.id
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     election_id = db.Column(db.Integer, db.ForeignKey(
@@ -80,6 +147,12 @@ class Vote(db.Model):
 
     def __repr__(self):
         return f'<Vote {self.election} {self.candidate} {self.user}>'
+<<<<<<< HEAD
+=======
+
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
+>>>>>>> develop
 
 
 # flask_login stuff

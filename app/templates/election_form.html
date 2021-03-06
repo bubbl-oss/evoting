@@ -2,7 +2,19 @@
 
 {% block content %}
 <h1> {{ 'Update' if request.endpoint == 'update_election' else 'Create' }} Election</h1>
-<form action="" method="post">
+<form x-data="{ count: '{{ count_candidates }}' }" onsubmit="return false;" x-on:submit="count++" id="c-form"
+      hx-get="/add-candidate" hx-target="#additional-fields" hx-swap="beforeend">
+    <input type="text" name="c" x-bind:value="count" hidden>
+</form>
+<!-- Attach the candidate fields to this if and only if you are doing a remove candidate form operation -->
+<form id="remove-c-form" hx-trigger="submit" hx-post="/remove-candidate" hx-target="#candidate-fields">
+</form>
+{% if request.endpoint == 'update_election' %}
+<form id="delete-c-form" hx-trigger="submit" hx-get="{{ url_for('delete_candidate', link=election.link) }}"
+      hx-target="#candidate-fields">
+</form>
+{% endif %}
+<form method="post">
     {{ form.hidden_tag() }}
     <p>
         {{ form.name.label }}<br>
@@ -19,17 +31,13 @@
         {% endfor %}
     </p>
     <p>
-        Date<br>
-        {{ form.date_of_election(class='select_date') }}<br>
+        Date and Time<br>
+        {{ form.date_of_election(class='select_date') }} {{ form.time_of_election(type='time', class='select_time') }}
         {% for error in form.date_of_election.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;display: block">[{{ error }}]</span>
         {% endfor %}
-    </p>
-    <p>
-        Time<br>
-        {{ form.time_of_election(type='time', class='select_time') }}<br>
         {% for error in form.time_of_election.errors %}
-        <span style="color: red;">[{{ error }}]</span>
+        <span style="color: red;display: block;">[{{ error }}]</span>
         {% endfor %}
     </p>
     <!-- Render the status field if this is an update... -->
@@ -42,14 +50,49 @@
     </p>
     <hr>
     <h4>Candidates</h4>
-    <!-- <button onclick="add_candidate()" type="button">Add candidate</button> -->
-    <p>
-        {{ form.candidates.label }}<br>
-        {{ form.candidates() }}<br>
+
+
+    <input type="submit" form="c-form" value="Add Candidate" />
+
+    <section id="candidate-fields">
+        <!-- We can't use 'name' as the name of the form field because its already a property of the object -->
+        {% for c in form.candidates %}
+        <div x-data="{ id: '2' }" x-init="id = $refs.index.value" id="{{ c.id }}">
+            {{ c['id'](class='candidate-field', hidden='true', **{'x-ref': 'index'}) }}
+            {{ c['name'].label }} {{ c['name'](class='candidate-field') }}<br>
+            {{ c.bio.label }} {{ c['bio'](class='candidate-field') }}<br>
+            {{ c.hidden_tag() }}
+
+            {% if request.endpoint == 'update_election' %}
+            <input hidden type="radio" name="i" x-ref="input" x-model="id" form="delete-c-form" />
+            <input style="border: solid 3px red;padding: 5px;cursor: pointer"
+                   x-on:click="$refs.input.checked = true;$refs.input.value = id" type="submit" value="Delete"
+                   form="delete-c-form" />
+            {% endif %}
+
+
+            <!-- INFO: Use Remove to remove a new candidate form field from the form, not to delete an already
+            existing Candidate -->
+            <!-- TODO: prevent this from working for the first two elements -->
+            <input style="border: solid 1px black;padding: 5px;cursor: pointer" type="submit" value="Remove"
+                   form="remove-c-form" onclick="setForm('{{ c.id }}');" />
+        </div>
+
+        {% endfor %}
         {% for error in form.candidates.errors %}
         <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
-    </p>
+        <div id="additional-fields"></div>
+    </section>
+
+    <script>
+        function setForm(id) {
+            console.log('Setting form');
+            document.forms[2].querySelectorAll('.candidate-field').forEach((e) => { e.setAttribute('form', 'remove-c-form') })
+            document.getElementById(id).remove();
+        }
+    </script>
+
     <p>
         {{ form.password.label }}<br>
         {{ form.password(size=10) }}<br>
@@ -57,12 +100,9 @@
         <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
     </p>
-    <p>{{ form.submit() }}</p>
+    <p>{{ form.submit(value='Submit') }}</p>
 
-    {% for field, errors in form.errors.items() %}
-    <div class="alert alert-error">
-        {{ form[field].label }}: {{ ', '.join(errors) }}
-    </div>
-    {% endfor %}
+
+
 </form>
 {% endblock %}

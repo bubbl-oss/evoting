@@ -3,10 +3,38 @@
 {% block content %}
 <div>
     <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
+    <p>This is the election link</p>
+    <h3 style="color: lime;background-color: gray;">{{ url_for('election', link=election.link, _external=True) }} </h3>
+    {% if election.owner.id == current_user.id %}
+    <a href="{{ url_for('update_election', link=election.link) }}">edit</a>
+    <a href="{{ url_for('delete_election', link=election.link) }}">delete</a>
+    {% endif %}
     <h4> Created by: {{ election.owner.email }} </h4>
     <h3>Created: {{ election.created_at }} </h3>
 
     <h3>Scheduled for: {{ election.date_of_election }} at {{ election.time_of_election }} </h3>
+
+    {% if election.owner.id == current_user.id and statuses %}
+    <form action="/election/{{ election.link }}/change-status" method="POST">
+        <!-- status -->
+        {% for s in statuses %}
+        <label>
+            <input onchange="this.form.submit();" type="radio" name="status" value="{{ s.id }}" {{ 'checked' if
+                   election.status.id==s.id }}> {{ s.name
+            }}
+        </label><br>
+        {% endfor %}
+    </form>
+
+    <script>
+        function doSubmit(e) {
+            e.preventDefault();
+        }
+    </script>
+
+
+    <div id="status_change_response"></div>
+    {% endif %}
 
     {% if election.candidates %}
     <h4>Candidates</h4>
