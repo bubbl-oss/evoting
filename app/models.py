@@ -126,7 +126,7 @@ class Vote(db.Model):
     password = db.Column(db.String())
 
     def __repr__(self):
-        return f'<Vote {self.id}>'
+        return f'<Vote {self.election} {self.candidate} {self.user}>'
 
     def as_dict(self):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}

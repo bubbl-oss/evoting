@@ -5,8 +5,9 @@ import json
 import uuid
 from flask import render_template, request, url_for, redirect, abort, jsonify
 from flask_login import current_user, login_user, login_required, logout_user
-from app.models import Type, User, Election, Status, Candidate
-from app.forms import ElectionForm, status, CandidateForm
+from app.models import Type, User, Election, Status, Candidate, Vote
+from app.forms import ElectionForm, VotePasswordForm, VotingForm
+from sqlalchemy import and_
 
 # I WILL ADD COMMENTS LATER
 
@@ -234,9 +235,53 @@ def delete_candidate(link):
     return redirect(url_for('missing_route'))
 
 
-@app.route("/voting-link")
-def election_url():
-    return render_template('election_url.html', title="Election Url")
+@app.route("/election/<link>/vote", methods=['GET', 'POST'])
+@login_required
+def voting_pass_link(link):
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        return redirect(url_for('404.html'))
+    password = election.password
+
+    form = VotePasswordForm()
+    if form.validate_on_submit():
+        if password is not None:
+            if form.password.data != password:
+                return redirect(url_for('voting_pass_link', link=link))
+            else:
+                return redirect(url_for('election_vote', link=link))
+    return render_template('voting_pass_link.html', form=form)
+
+
+@app.route("/election/<link>/vote/candidate", methods=['GET', 'POST'])
+@login_required
+def election_vote(link):
+    election = Election.query.filter_by(link=link).first()
+    candidates = election.candidates
+
+    form = VotingForm()
+    form.candidates.choices = [(candidate.id, candidate.name)
+                               for candidate in candidates]
+    if form.validate_on_submit():
+        user_vote = Vote.query.\
+            filter_by(election=election, user=current_user).first()
+        if user_vote is not None:
+            db.session.delete(user_vote)
+            db.session.commit()
+
+        voted = request.form['candidates']
+        voted_candidate = Candidate.query.filter_by(id=voted).first()
+        vote = Vote(user=current_user, election=election,
+                    candidate=voted_candidate)
+        db.session.add(vote)
+        db.session.commit()
+        return redirect(url_for('vote_success'))
+    return render_template('election_vote.html', title="Vote", form=form, candidates=candidates)
+
+
+@app.route("/election/success", methods=['GET'])
+def vote_success():
+    return render_template('vote_success_message.html')
 
 
 @app.route("/statuses")
