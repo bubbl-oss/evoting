@@ -1,0 +1,21 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<form action="" method="post" >
+    {{ form.hidden_tag() }}
+    <h4>Candidates</h4>
+    {% for candidate in candidates %}
+    <p>
+    <input type="radio" name="candidates" value="{{ candidate.id }}"> {{ candidate.name }} <br>
+    </p>
+    {% endfor %}
+    <p>{{ form.submit() }}</p>
+
+    {% for field, errors in form.errors.items() %}
+    <div class="alert alert-error">
+        {{ form[field].label }}: {{ ', '.join(errors) }}
+    </div>
+    {% endfor %}
+    
+</form>
+{% endblock %}
