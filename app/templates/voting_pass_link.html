@@ -3,6 +3,7 @@
 {% block content %}
 <form action="" method="post">
     {{ form.hidden_tag() }}
+    <h3>Click on continue if there is no pass code</h3>
     <p>
         {{ form.password.label }}<br>
         {{ form.password(size=10) }}<br>
