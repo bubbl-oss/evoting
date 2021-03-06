@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, SelectField, SubmitField, PasswordField, TextAreaField
+from wtforms import StringField, IntegerField, SelectField, SubmitField, PasswordField, TextAreaField, RadioField
 from wtforms.fields.core import FieldList, FormField
 from wtforms.fields.html5 import DateField, DateTimeField
 from wtforms.validators import DataRequired
@@ -7,8 +7,9 @@ from app.models import Status
 
 
 class CandidateForm(FlaskForm):
+    id = StringField('Id')
     name = StringField('Name')
-    description = TextAreaField('Description')
+    bio = TextAreaField('Bio')
 
 
 class ElectionForm(FlaskForm):
@@ -25,7 +26,17 @@ class ElectionForm(FlaskForm):
     submit = SubmitField('Generate Link')
 
 
-def status(request, id):
-    status = Status.query.get(id)
-    form = ElectionForm(request.POST, obj=status)
-    form.status_id.choices = [(s.id, s.status) for s in Status.query.all()]
+# def status(request, id):
+#     status = Status.query.get(id)
+#     form = ElectionForm(request.POST, obj=status)
+#     form.status_id.choices = [(s.id, s.status) for s in Status.query.all()]
+
+
+class VotePasswordForm(FlaskForm):
+    password = StringField('Password')
+    submit = SubmitField('Continue')
+
+
+class VotingForm(FlaskForm):
+    candidates = RadioField('Candidates', choices=[], coerce=str)
+    submit = SubmitField('Vote')

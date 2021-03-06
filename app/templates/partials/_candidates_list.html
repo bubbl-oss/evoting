@@ -1,0 +1,20 @@
+{% for c in form.candidates %}
+<div x-data="{ id: '2' }" x-init="id = $refs.index.value" id="{{ c.id }}">
+    {{ c['id'](class='candidate-field', hidden='true', **{'x-ref': 'index'}) }}
+    {{ c['name'].label }} {{ c['name'](class='candidate-field') }}<br>
+    {{ c.bio.label }} {{ c['bio'](class='candidate-field') }}<br>
+    {{ c.hidden_tag() }}
+
+    {% if request.endpoint == 'update_election' %}
+    <input hidden type="radio" name="i" x-ref="input" x-model="id" form="delete-c-form" />
+    <input style="border: solid 3px red;padding: 5px;cursor: pointer"
+           x-on:click="$refs.input.checked = true;$refs.input.value = id" type="submit" value="Delete"
+           form="delete-c-form" />
+    {% endif %}
+
+
+    <!-- TODO: prevent this from working for the first two elements -->
+    <input style="border: solid 1px black;padding: 5px;cursor: pointer" type="submit" value="Remove"
+           form="remove-c-form" onclick="setForm('{{ c.id }}');" />
+</div>
+{% endfor %}
