@@ -8,8 +8,6 @@ from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
 from sqlalchemy import and_
-<<<<<<< HEAD
-=======
 
 # I WILL ADD COMMENTS LATER
 
@@ -19,7 +17,6 @@ def to_json_array(collection):
     for item in collection:
         list.append(item.as_dict())
     return list
->>>>>>> develop
 
 
 @app.route("/")
@@ -68,41 +65,6 @@ def dashboard():
 def create_election():
     # if user is authenticated, make the owner of the election the current logged in user
     # if the user is not authenticated, redirect the user to the login page
-<<<<<<< HEAD
-    if current_user.is_authenticated:
-        form = ElectionForm()
-        if form.validate_on_submit:
-            if form.password.data is not None:
-                election = Election(owner=current_user.id, name_of_election=form.name_of_election.data, 
-                                    date_of_election=form.date_of_election.data, 
-                                    time_of_election=form.time_of_election.data,
-                                    status=form.status.data, number_of_voters=form.number_of_voters.data, 
-                                    password=form.password.data)
-                db.session.add(election)
-                db,session.commit()
-            else:
-                election = Election(owner=current_user.id, name_of_election=form.name_of_election.data, 
-                                    date_of_election=form.date_of_election.data, 
-                                    time_of_election=form.time_of_election.data,
-                                    status=form.status.data, number_of_voters=form.number_of_voters.data)
-                db.session.add(election)
-                db,session.commit()
-        return redirect(url_for('election_url'))
-    else:
-        return redirect(url_for('index'))
-    return render_template("create_election.html", title="Create Election", form=form)
-
-
-@app.route("/election/<int:election_id>")
-def election(election_id):
-    election = Election.query.get_or_404(election_id)
-    return render_template('election.html', title=election.name_of_election, election=election)
-
-
-@app.route("/election/<int:election_id>/update", methods=['GET', 'POST'])
-def update_election(election_id):
-    election = Election.query.get_or_404(election_id)
-=======
 
     form = ElectionForm()
     if form.validate_on_submit():
@@ -164,12 +126,7 @@ def delete_election(link):
 def update_election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
-<<<<<<< HEAD
-        return redirect(url_for('404.html'))
->>>>>>> 72aae7a1e5e0973c55a61977d69135be2dcad0b6
-=======
         return redirect(url_for('missing_route'))
->>>>>>> dac5e437c6a00c8df029b2f4a0c40084fbdb5376
     if election.owner != current_user:
         return redirect(url_for('index'))
         # return abort(403) doesn't seem to work. not sure tho
@@ -182,10 +139,6 @@ def update_election(link):
         election.name = form.name.data
         election.date_of_election = form.date_of_election.data
         election.time_of_election = form.time_of_election.data
-<<<<<<< HEAD
-        # election.status = form.status.data
-=======
->>>>>>> develop
         election.number_of_voters = form.number_of_voters.data
         election.description = form.description.data
         election.password = form.password.data
@@ -200,7 +153,7 @@ def update_election(link):
                 c_.name = c['name']
                 c_.bio = c['bio']
                 db.session.add(c_)
-            # else tis a new candidate
+            # else this a new candidate
             else:
                 candidate = Candidate(election=election,
                                       name=c['name'], bio=c['bio'])
@@ -253,9 +206,6 @@ def change_election_status(link):
 @app.route("/election/<link>/remove-candidate", methods=['GET', 'POST'])
 def delete_candidate(link):
 
-<<<<<<< HEAD
-@app.route("/election/<link>/vote", methods=['GET','POST'])
-=======
     if not current_user.is_authenticated:
         redirect(url_for('index'))
 
@@ -286,7 +236,6 @@ def delete_candidate(link):
 
 
 @app.route("/election/<link>/vote", methods=['GET', 'POST'])
->>>>>>> develop
 @login_required
 def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
@@ -301,11 +250,7 @@ def voting_pass_link(link):
                 return redirect(url_for('voting_pass_link', link=link))
             else:
                 return redirect(url_for('election_vote', link=link))
-<<<<<<< HEAD
-    return render_template('voting_pass_link.html', form=form) 
-=======
     return render_template('voting_pass_link.html', form=form)
->>>>>>> develop
 
 
 @app.route("/election/<link>/vote/candidate", methods=['GET', 'POST'])
@@ -314,15 +259,9 @@ def election_vote(link):
     election = Election.query.filter_by(link=link).first()
     candidates = election.candidates
 
-<<<<<<< HEAD
-
-    form = VotingForm()
-    form.candidates.choices = [(candidate.id, candidate.name) for candidate in candidates]
-=======
     form = VotingForm()
     form.candidates.choices = [(candidate.id, candidate.name)
                                for candidate in candidates]
->>>>>>> develop
     if form.validate_on_submit():
         user_vote = Vote.query.\
             filter_by(election=election, user=current_user).first()
@@ -332,22 +271,13 @@ def election_vote(link):
 
         voted = request.form['candidates']
         voted_candidate = Candidate.query.filter_by(id=voted).first()
-<<<<<<< HEAD
-        vote = Vote(user=current_user, election=election, candidate=voted_candidate)
-=======
         vote = Vote(user=current_user, election=election,
                     candidate=voted_candidate)
->>>>>>> develop
         db.session.add(vote)
         db.session.commit()
         return redirect(url_for('vote_success'))
     return render_template('election_vote.html', title="Vote", form=form, candidates=candidates)
 
-<<<<<<< HEAD
-@app.route("/election/success", methods=['GET'])
-def vote_success():
-    return render_template('vote_success_message.html')
-=======
 
 @app.route("/election/success", methods=['GET'])
 def vote_success():
@@ -358,7 +288,6 @@ def vote_success():
 def get_statuses():
     cs = Election.query.get(1)
     return jsonify(cs.as_dict())
->>>>>>> develop
 
 
 @app.route("/logout-complete")
