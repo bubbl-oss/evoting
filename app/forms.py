@@ -7,8 +7,9 @@ from app.models import Status
 
 
 class CandidateForm(FlaskForm):
+    id = StringField('Id')
     name = StringField('Name')
-    description = TextAreaField('Description')
+    bio = TextAreaField('Bio')
 
 
 class ElectionForm(FlaskForm):
@@ -34,6 +35,7 @@ class ElectionForm(FlaskForm):
 class VotePasswordForm(FlaskForm):
     password = StringField('Password')
     submit = SubmitField('Continue')
+
 
 class VotingForm(FlaskForm):
     candidates = RadioField('Candidates', choices=[], coerce=str)
