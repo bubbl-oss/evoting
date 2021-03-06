@@ -79,7 +79,7 @@ class Vote(db.Model):
     password = db.Column(db.String())
 
     def __repr__(self):
-        return f'<Vote {self.id}>'
+        return f'<Vote {self.election} {self.candidate} {self.user}>'
 
 
 # flask_login stuff
