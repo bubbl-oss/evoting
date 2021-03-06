@@ -71,6 +71,8 @@
             {% endif %}
 
 
+            <!-- INFO: Use Remove to remove a new candidate form field from the form, not to delete an already
+            existing Candidate -->
             <!-- TODO: prevent this from working for the first two elements -->
             <input style="border: solid 1px black;padding: 5px;cursor: pointer" type="submit" value="Remove"
                    form="remove-c-form" onclick="setForm('{{ c.id }}');" />

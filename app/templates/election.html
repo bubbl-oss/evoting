@@ -3,6 +3,8 @@
 {% block content %}
 <div>
     <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
+    <p>This is the election link</p>
+    <h3 style="color: lime;background-color: gray;">{{ url_for('election', link=election.link, _external=True) }} </h3>
     {% if election.owner.id == current_user.id %}
     <a href="{{ url_for('update_election', link=election.link) }}">edit</a>
     <a href="{{ url_for('delete_election', link=election.link) }}">delete</a>
