@@ -241,6 +241,10 @@ def delete_candidate(link):
 @login_required
 def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
+    # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
+    if election.status.name != "started":
+        return redirect(url_for('missing_route'))
+
     if election is None:
         return redirect(url_for('404.html'))
     password = election.password
@@ -259,6 +263,9 @@ def voting_pass_link(link):
 @login_required
 def election_vote(link, passcode):
     election = Election.query.filter_by(link=link).first()
+    # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors??? 
+    if election.status.name != "started":
+        return redirect(url_for('missing_route'))   
     candidates = election.candidates
     password = election.password
 
