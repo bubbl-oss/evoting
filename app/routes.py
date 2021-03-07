@@ -188,7 +188,7 @@ def update_election(link):
 @app.route("/election/<link>/change-status", methods=['POST'])
 @login_required
 def change_election_status(link):
-    #No need for this because flask_login provides a wrapper called login_required that does the same thing as this 
+    # No need for this because flask_login provides a wrapper called login_required that does the same thing as this
     # if not current_user.is_authenticated:
     #     redirect(url_for('index'))
 
@@ -217,7 +217,7 @@ def change_election_status(link):
 @login_required
 def delete_candidate(link):
 
-    #No need for this because flask_login provides a wrapper called login_required that does the same thing as this 
+    # No need for this because flask_login provides a wrapper called login_required that does the same thing as this
     # if not current_user.is_authenticated:
     #     redirect(url_for('index'))
 
@@ -259,7 +259,7 @@ def voting_pass_link(link):
 
     if election is None:
         flash(f'There is no such election', 'danger')
-        return redirect(url_for('404.html'))
+        return redirect(url_for('missing_route'))
     #this is redundant
     #password = election.password
 
@@ -279,10 +279,10 @@ def voting_pass_link(link):
 @login_required
 def election_vote(link):
     election = Election.query.filter_by(link=link).first()
-    # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors??? 
+    # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
         flash(f'The election hasnt started yet chill bro.................or sis', 'danger')
-        return redirect(url_for('missing_route'))   
+        return redirect(url_for('missing_route'))
     candidates = election.candidates
 
     form = VotingForm()
