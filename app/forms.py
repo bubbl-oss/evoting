@@ -22,7 +22,7 @@ class ElectionForm(FlaskForm):
                            min_entries=2, max_entries=10)
     number_of_voters = IntegerField(
         'Number of Voters', validators=[DataRequired()])
-    password = PasswordField('Password')
+    password = StringField('Password')
     submit = SubmitField('Generate Link')
 
 

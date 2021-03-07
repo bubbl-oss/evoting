@@ -207,6 +207,7 @@ def update_election(link):
         form.name.data = election.name
         form.date_of_election.data = election.date_of_election
         form.time_of_election.data = election.time_of_election
+        form.description.data = election.description
         form.number_of_voters.data = election.number_of_voters
         form.password.data = election.password
 

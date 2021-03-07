@@ -1,13 +1,9 @@
-from dataclasses import dataclass
 from app import db, login
 from flask_login import UserMixin
 from datetime import datetime
 
 
-# @dataclass(init=False)
 class Type(db.Model):
-    # id: int
-    # name: str
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String())  # name of type
@@ -21,10 +17,6 @@ class Type(db.Model):
 
 
 class User(UserMixin, db.Model):
-    # id: int
-    # email: str
-    # verified: bool
-    # type: Type
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -61,8 +53,6 @@ class Candidate(db.Model):
 
 
 class Status(db.Model):
-    # id: int
-    # name: str
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
@@ -76,20 +66,7 @@ class Status(db.Model):
 
 
 class Election(db.Model):
-    # id: int
-    # name: str
-    # description: str
-    # created_at: datetime
-    # modified_at: datetime
-    # owner: User.id
-    # date_of_election: datetime
-    # time_of_election: datetime
-    # link: str
-    # status: Status
-    # number_of_voters: str
-    # password: str
 
-    # --- #
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     name = db.Column(db.String(), nullable=False, index=True)
@@ -98,6 +75,7 @@ class Election(db.Model):
     modified_at = db.Column(db.DateTime, default=datetime.utcnow)
     date_of_election = db.Column(db.DateTime, index=True)
     time_of_election = db.Column(db.DateTime, index=True)
+    ending_at = db.Column(db.DateTime)
     link = db.Column(db.String())
     status_id = db.Column(db.Integer, db.ForeignKey(
         'status.id'), nullable=False)
@@ -117,9 +95,9 @@ class Election(db.Model):
 class Candidate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False, index=True)
-    image = db.Column(db.String())  # should be nullable tbh
+    image = db.Column(db.String())
     bio = db.Column(db.Text)
-    position = db.Column(db.String(200))  # should be nullable
+    position = db.Column(db.String(200))
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id'), nullable=False)
     votes = db.relationship('Vote', backref='candidate', lazy='dynamic')
@@ -131,11 +109,7 @@ class Candidate(db.Model):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}
 
 
-# @dataclass(init=False)
 class Vote(db.Model):
-    # id: int
-    # election: Election.id
-    # candidate: Candidate.id
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -152,7 +126,6 @@ class Vote(db.Model):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}
 
 
-# flask_login stuff
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
