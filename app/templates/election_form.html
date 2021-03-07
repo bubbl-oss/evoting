@@ -95,7 +95,7 @@
 
     <p>
         {{ form.password.label }}<br>
-        {{ form.password(size=10) }}<br>
+        {{ form.password(size=10, type='password') }}<br>
         {% for error in form.password.errors %}
         <span style="color: red;">[{{ error }}]</span>
         {% endfor %}
