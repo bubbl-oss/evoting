@@ -74,10 +74,9 @@ def create_election():
             random_link = uuid.uuid4()
 
             election = Election(owner=current_user, name=form.name.data,
-                                date_of_election=datetime.combine(
-                                    form.date_of_election.data, time()),
+                                starting_at=form.starting_at.data,
+                                ending_at=form.ending_at.data,
                                 description=form.description.data,
-                                time_of_election=form.time_of_election.data,
                                 status=pending_status, number_of_voters=form.number_of_voters.data, link=str(
                                     random_link),
                                 password=form.password.data)
@@ -116,6 +115,9 @@ def delete_election(link):
     for c in election.candidates.all():
         db.session.delete(c)
 
+    for v in election.votes.all():
+        db.session.delete(v)
+
     db.session.delete(election)
     db.session.commit()
 
@@ -137,8 +139,8 @@ def update_election(link):
     print(type(candidates_))
     if form.validate_on_submit():
         election.name = form.name.data
-        election.date_of_election = form.date_of_election.data
-        election.time_of_election = form.time_of_election.data
+        election.starting_at = form.starting_at.data
+        election.ending_at = form.ending_at.data
         election.number_of_voters = form.number_of_voters.data
         election.description = form.description.data
         election.password = form.password.data
@@ -165,8 +167,8 @@ def update_election(link):
 
     elif request.method == 'GET':
         form.name.data = election.name
-        form.date_of_election.data = election.date_of_election
-        form.time_of_election.data = election.time_of_election
+        form.starting_at.data = election.starting_at
+        form.ending_at.data = election.ending_at
         form.description.data = election.description
         form.number_of_voters.data = election.number_of_voters
         form.password.data = election.password
@@ -262,9 +264,9 @@ def voting_pass_link(link):
 @login_required
 def election_vote(link):
     election = Election.query.filter_by(link=link).first()
-    # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors??? 
+    # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
-        return redirect(url_for('missing_route'))   
+        return redirect(url_for('missing_route'))
     candidates = election.candidates
 
     form = VotingForm()

@@ -12,7 +12,7 @@
     <h4> Created by: {{ election.owner.email }} </h4>
     <h3>Created: {{ election.created_at }} </h3>
 
-    <h3>Scheduled for: {{ election.date_of_election }} at {{ election.time_of_election }} </h3>
+    <h3>Scheduled for: {{ election.starting_at }} </h3>
 
     {% if election.owner.id == current_user.id and statuses %}
     <form action="/election/{{ election.link }}/change-status" method="POST">
