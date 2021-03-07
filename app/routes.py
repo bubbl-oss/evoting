@@ -3,7 +3,7 @@ from datetime import datetime, time
 from app import app, db
 import json
 import uuid
-from flask import render_template, request, url_for, redirect, abort, jsonify
+from flask import render_template, request, url_for, redirect, abort, jsonify, flash
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
@@ -50,6 +50,7 @@ def login_complete():
         db.session.commit()
 
     login_user(user, remember=True)
+    flash(f'Login success', 'success')
     return redirect(url_for('dashboard'))
 
 
@@ -85,11 +86,11 @@ def create_election():
             for c in form.candidates.data:
                 candidate = Candidate(election=election,
                                       name=c['name'], bio=c['bio'])
-                print(candidate)
+
                 db.session.add(candidate)
 
             db.session.commit()
-        print('Hello')
+            flash(f'Candidates and election created succesfully', 'success')
         return redirect(url_for('election', link=random_link))
     return render_template("election_form.html", title="Create Election", form=form, count_candidates=2)
 
@@ -98,6 +99,7 @@ def create_election():
 def election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
+        flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
     if election.owner.id == current_user.id:
         statuses = Status.query.all()
@@ -108,8 +110,10 @@ def election(link):
 def delete_election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
+        flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
     if election.owner.id != current_user.id:
+        flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
     for c in election.candidates.all():
@@ -120,7 +124,7 @@ def delete_election(link):
 
     db.session.delete(election)
     db.session.commit()
-
+    flash(f'Election and candidates have been deleted', 'success')
     return redirect(url_for('dashboard'))
 
 
@@ -128,8 +132,10 @@ def delete_election(link):
 def update_election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
+        flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
     if election.owner != current_user:
+        flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
         # return abort(403) doesn't seem to work. not sure tho
 
@@ -162,7 +168,7 @@ def update_election(link):
                 db.session.add(candidate)
 
         db.session.commit()
-
+        flash(f'Election has been updated succesfully', 'success')
         return redirect(url_for('election', link=link))
 
     elif request.method == 'GET':
@@ -182,13 +188,16 @@ def update_election(link):
 
 
 @app.route("/election/<link>/change-status", methods=['POST'])
+@login_required
 def change_election_status(link):
-    if not current_user.is_authenticated:
-        redirect(url_for('index'))
+    # No need for this because flask_login provides a wrapper called login_required that does the same thing as this
+    # if not current_user.is_authenticated:
+    #     redirect(url_for('index'))
 
     election = Election.query.filter_by(link=link).first_or_404()
 
     if election.owner != current_user:
+        flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
     status_index = request.form.get('status')
@@ -202,19 +211,22 @@ def change_election_status(link):
     db.session.commit()
 
     # Add flash message here...
-
+    flash(f'Election status has been changed to {status.name}', 'success')
     return redirect(url_for('election', link=election.link))
 
 
 @app.route("/election/<link>/remove-candidate", methods=['GET', 'POST'])
+@login_required
 def delete_candidate(link):
 
-    if not current_user.is_authenticated:
-        redirect(url_for('index'))
+    # No need for this because flask_login provides a wrapper called login_required that does the same thing as this
+    # if not current_user.is_authenticated:
+    #     redirect(url_for('index'))
 
     election = Election.query.filter_by(link=link).first_or_404()
 
     if election.owner != current_user:
+        flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
     index = int(request.args.get('i') if request.args.get(
@@ -228,7 +240,7 @@ def delete_candidate(link):
         # delete!
         db.session.delete(candidate)
         db.session.commit()
-
+        flash(f'Candidate has been deleted', 'success')
         all_c = election.candidates.all()
 
         form = ElectionForm(candidates=all_c)
@@ -244,18 +256,23 @@ def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
+        flash(f'The election hasnt started yet chill bro.................or sis', 'danger')
         return redirect(url_for('missing_route'))
 
     if election is None:
-        return redirect(url_for('404.html'))
-    password = election.password
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+    #this is redundant
+    #password = election.password
 
     form = VotePasswordForm()
     if form.validate_on_submit():
-        if password is not None:
-            if form.password.data != password:
+        if election.password is not None:
+            if form.password.data != election.password:
+                flash(f'Incorrect password', 'danger')
                 return redirect(url_for('voting_pass_link', link=link))
             else:
+                flash(f'Happy voting', 'success')
                 return redirect(url_for('election_vote', link=link))
     return render_template('voting_pass_link.html', form=form)
 
@@ -285,6 +302,7 @@ def election_vote(link):
                     candidate=voted_candidate)
         db.session.add(vote)
         db.session.commit()
+        flash(f'You have successfully voted; may the odds forever be in your favour', 'success')
         return redirect(url_for('vote_success'))
     return render_template('election_vote.html', title="Vote", form=form, candidates=candidates)
 
@@ -304,6 +322,7 @@ def get_statuses():
 def logout_complete():
     # TODO: STILL TEMPORARY
     logout_user()
+    flash(f'You have logged out succesfully', 'success')
     return render_template("logout_complete.html", title="Logout Complete Page")
 
 
