@@ -1,107 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% if title %}
-    <title>{{ title }} - E-Voting</title>
-    {% else %}
-    <title>Welcome to E-Voting</title>
-    {% endif %}
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        {% if title %}
+        <title>{{ title }} - E-Voting</title>
+        {% else %}
+        <title>Welcome to E-Voting</title>
+        {% endif %}
 
-    <!-- External Scripts -->
-    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
-    <script src="https://unpkg.com/htmx.org@1.2.1"
+        <!-- External Scripts -->
+        <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+        <script src="https://unpkg.com/htmx.org@1.2.1"
             integrity="sha384-t37OW0DbqgL50XZW+Tl8TLchxsPoxIJ7NQ/l4aSZIXZVJQAhyQvvkWZgL/SiY/jD"
             crossorigin="anonymous"></script>
-</head>
+    </head>
 
-<body class="{{ styles }}">
-    <div>Evoting: <a href="{{ url_for('index') }}">Home</a>, {% if current_user.is_authenticated %}
-        <a href="{{ url_for('dashboard') }}">Dashboard</a>
-        {% endif %}
-        {% if current_user.is_anonymous %}
-        <div>
-            <button onclick="login()">Login</button>
+    <body class="{{ styles }}">
+        <div>Evoting: <a href="{{ url_for('index') }}">Home</a>, {% if current_user.is_authenticated %}
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            {% endif %}
+            {% if current_user.is_anonymous %}
+            <div>
+                <button onclick="login()">Login</button>
+            </div>
+            {% else %}
+            <div>
+                <button onclick="logout()">Logout</button>
+            </div>
+            {% endif %}
+
+            {% if current_user.is_authenticated %}
+            <div>
+                Hello, {{ current_user.email.split("@")[0].split(".")[0] }}
+            </div>
+            {% endif %}
         </div>
-        {% else %}
-        <div>
-            <button onclick="logout()">Logout</button>
+        <hr>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages%}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">
+            {{message}}
         </div>
+        {% endfor %}
         {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
 
-        {% if current_user.is_authenticated %}
-        <div>
-            Hello, {{ current_user.email.split("@")[0].split(".")[0] }}
-        </div>
-        {% endif %}
-    </div>
-    <hr>
-    {% block content %}{% endblock %}
+        <script src="https://auther.mybubbl.me/js/auth.js?v=0.2.0"></script>
+        <script>
+            var login = function () {
+                var Auth = new BubblAuth('https://auther.mybubbl.me');
 
-    <script src="https://auther.mybubbl.me/js/auth.js?v=0.2.0"></script>
-    <script>
-        var login = function () {
-            var Auth = new BubblAuth('https://auther.mybubbl.me');
+                Auth.login()
+                    .then((data) => {
+                        console.log('Authenticated successfully! => ' + data);
+                        // after successful login, tell the server.
+                        //
+                        window.location = `/login-complete?user=${data}&token=correct2021`;
+                    })
+                    .catch((err) => {
+                        console.error('Error logging in! Try again?', err);
+                        document.getElementById('error-notif').style.display = 'block';
+                    });
+            };
 
-            Auth.login()
-                .then((data) => {
-                    console.log('Authenticated successfully! => ' + data);
-                    // after successful login, tell the server.
-                    //
-                    window.location = `/login-complete?user=${data}&token=correct2021`;
-                })
-                .catch((err) => {
-                    console.error('Error logging in! Try again?', err);
-                    document.getElementById('error-notif').style.display = 'block';
-                });
-        };
+            var logout = function () {
+                var Auth = new BubblAuth('https://auther.mybubbl.me');
 
-        var logout = function () {
-            var Auth = new BubblAuth('https://auther.mybubbl.me');
+                Auth.logout()
+                    .then((data) => {
+                        console.log('Logged out successfully! => ' + data);
+                        // after successful logout, tell the server.
+                        //
+                        window.location = `/logout-complete?user=${data}&token=correct2021`;
+                    })
+                    .catch((err) => {
+                        console.error('Error logging in! Try again?', err);
+                        document.getElementById('error-notif').style.display = 'block';
+                    });
+            };
+        </script>
 
-            Auth.logout()
-                .then((data) => {
-                    console.log('Logged out successfully! => ' + data);
-                    // after successful logout, tell the server.
-                    //
-                    window.location = `/logout-complete?user=${data}&token=correct2021`;
-                })
-                .catch((err) => {
-                    console.error('Error logging in! Try again?', err);
-                    document.getElementById('error-notif').style.display = 'block';
-                });
-        };
-    </script>
-
-    {% if request.endpoint == 'create_election' %}
-    <script>
-        window.onload = function () { console.log('Create Elecion page loaded!') };
+        {% if request.endpoint == 'create_election' %}
+        <script>
+            window.onload = function () { console.log('Create Elecion page loaded!') };
         /** let last_candidate_index = 1;
+    
+            function create_new_candidate_block() {
+                let new_index = last_candidate_index + 1;
+                return `
+                <li><button style="position:relative;color:red" onclick="remove_candidate(this.parentElement)">x</button> <label for="candidates-${new_index}">Candidates-${new_index}</label> <table id="candidates-${new_index}"><tbody><tr><th><label for="candidates-${new_index}-name">Name</label></th><td><input id="candidates-${new_index}-name" name="candidates-${new_index}-name" type="text" value=""></td></tr><tr><th><label for="candidates-${new_index}-description">Description</label></th><td><textarea id="candidates-${new_index}-description" name="candidates-${new_index}-description"></textarea></td></tr></tbody></table>
+                </li>`
+            }
+    
+            function add_candidate() {
+                const c = document.getElementById('candidates');
+                c.insertAdjacentHTML('beforeend', create_new_candidate_block());
+                last_candidate_index++;
+                console.log('Added candidate succssfully!');
+            }
+    
+            function remove_candidate(candidate_el) {
+                candidate_el.parentElement.removeChild(candidate_el);
+                console.log('Removed candidate succssfully!');
+            } */
+        </script>
+        {% endif %}
 
-        function create_new_candidate_block() {
-            let new_index = last_candidate_index + 1;
-            return `
-            <li><button style="position:relative;color:red" onclick="remove_candidate(this.parentElement)">x</button> <label for="candidates-${new_index}">Candidates-${new_index}</label> <table id="candidates-${new_index}"><tbody><tr><th><label for="candidates-${new_index}-name">Name</label></th><td><input id="candidates-${new_index}-name" name="candidates-${new_index}-name" type="text" value=""></td></tr><tr><th><label for="candidates-${new_index}-description">Description</label></th><td><textarea id="candidates-${new_index}-description" name="candidates-${new_index}-description"></textarea></td></tr></tbody></table>
-            </li>`
-        }
-
-        function add_candidate() {
-            const c = document.getElementById('candidates');
-            c.insertAdjacentHTML('beforeend', create_new_candidate_block());
-            last_candidate_index++;
-            console.log('Added candidate succssfully!');
-        }
-
-        function remove_candidate(candidate_el) {
-            candidate_el.parentElement.removeChild(candidate_el);
-            console.log('Removed candidate succssfully!');
-        } */
-    </script>
-    {% endif %}
-
-</body>
+    </body>
 
 </html>
