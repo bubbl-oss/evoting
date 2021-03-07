@@ -31,12 +31,22 @@
         {% endfor %}
     </p>
     <p>
-        Date and Time<br>
-        {{ form.date_of_election(class='select_date') }} {{ form.time_of_election(type='time', class='select_time') }}
-        {% for error in form.date_of_election.errors %}
+        Starting At<br>
+        {{ form.starting_at(class='select_starttime') }}
+        {% for error in form.starting_at.errors %}
         <span style="color: red;display: block">[{{ error }}]</span>
         {% endfor %}
-        {% for error in form.time_of_election.errors %}
+        {% for error in form.starting_at.errors %}
+        <span style="color: red;display: block;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        Ending At<br>
+        {{ form.ending_at(class='select_endtime') }}
+        {% for error in form.ending_at.errors %}
+        <span style="color: red;display: block">[{{ error }}]</span>
+        {% endfor %}
+        {% for error in form.ending_at.errors %}
         <span style="color: red;display: block;">[{{ error }}]</span>
         {% endfor %}
     </p>

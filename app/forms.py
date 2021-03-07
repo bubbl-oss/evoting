@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SubmitField, PasswordField, TextAreaField, RadioField
 from wtforms.fields.core import FieldList, FormField
-from wtforms.fields.html5 import DateField, DateTimeField
+from wtforms.fields.html5 import DateTimeLocalField
 from wtforms.validators import DataRequired
 from app.models import Status
 
@@ -16,8 +16,11 @@ class ElectionForm(FlaskForm):
     name = StringField(
         'Election Name', validators=[DataRequired()])
     description = TextAreaField('Election Description')
-    date_of_election = DateField('Date of Election', format='%Y-%m-%d')
-    time_of_election = DateTimeField('Time of Election', format='%H:%M')
+    starting_at = DateTimeLocalField(
+        'Date and Time of Election', format='%Y-%m-%dT%H:%M')
+    # TODO: this is temporary. We will add the supplied time to the start date and just save it
+    ending_at = DateTimeLocalField(
+        'Duration of Election', format='%Y-%m-%dT%H:%M')
     candidates = FieldList(FormField(CandidateForm),
                            min_entries=2, max_entries=10)
     number_of_voters = IntegerField(
