@@ -3,11 +3,12 @@ from datetime import datetime, time
 from app import app, db
 import json
 import uuid
+import string
+import random
 from flask import render_template, request, url_for, redirect, abort, jsonify
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
-from sqlalchemy import and_
 
 # I WILL ADD COMMENTS LATER
 
@@ -65,41 +66,6 @@ def dashboard():
 def create_election():
     # if user is authenticated, make the owner of the election the current logged in user
     # if the user is not authenticated, redirect the user to the login page
-<<<<<<< HEAD
-    if current_user.is_authenticated:
-        form = ElectionForm()
-        if form.validate_on_submit:
-            if form.password.data is not None:
-                election = Election(owner=current_user.id, name_of_election=form.name_of_election.data, 
-                                    date_of_election=form.date_of_election.data, 
-                                    time_of_election=form.time_of_election.data,
-                                    status=form.status.data, number_of_voters=form.number_of_voters.data, 
-                                    password=form.password.data)
-                db.session.add(election)
-                db,session.commit()
-            else:
-                election = Election(owner=current_user.id, name_of_election=form.name_of_election.data, 
-                                    date_of_election=form.date_of_election.data, 
-                                    time_of_election=form.time_of_election.data,
-                                    status=form.status.data, number_of_voters=form.number_of_voters.data)
-                db.session.add(election)
-                db,session.commit()
-        return redirect(url_for('election_url'))
-    else:
-        return redirect(url_for('index'))
-    return render_template("create_election.html", title="Create Election", form=form)
-
-
-@app.route("/election/<int:election_id>")
-def election(election_id):
-    election = Election.query.get_or_404(election_id)
-    return render_template('election.html', title=election.name_of_election, election=election)
-
-
-@app.route("/election/<int:election_id>/update", methods=['GET', 'POST'])
-def update_election(election_id):
-    election = Election.query.get_or_404(election_id)
-=======
 
     form = ElectionForm()
     if form.validate_on_submit():
@@ -161,12 +127,7 @@ def delete_election(link):
 def update_election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
-<<<<<<< HEAD
-        return redirect(url_for('404.html'))
->>>>>>> 72aae7a1e5e0973c55a61977d69135be2dcad0b6
-=======
         return redirect(url_for('missing_route'))
->>>>>>> dac5e437c6a00c8df029b2f4a0c40084fbdb5376
     if election.owner != current_user:
         return redirect(url_for('index'))
         # return abort(403) doesn't seem to work. not sure tho
@@ -294,11 +255,19 @@ def voting_pass_link(link):
     return render_template('voting_pass_link.html', form=form)
 
 
-@app.route("/election/<link>/vote/candidate", methods=['GET', 'POST'])
+@app.route("/election/<link>/vote/<passcode>/candidate", methods=['GET', 'POST'])
 @login_required
-def election_vote(link):
+def election_vote(link, passcode):
     election = Election.query.filter_by(link=link).first()
     candidates = election.candidates
+    password = election.password
+
+
+    if password is not None:
+        passcode = bcrypt.generate_password_hash(password)
+    else:
+        passcode = ''.join(random.choices(string.ascii_uppercase + 
+                            string.ascii_lowercase + string.digits, k = 10))
 
     form = VotingForm()
     form.candidates.choices = [(candidate.id, candidate.name)

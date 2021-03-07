@@ -28,28 +28,8 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f'<User {self.email}>'
 
-<<<<<<< HEAD
-
-class Candidate(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(), nullable=False, index=True)
-    image = db.Column(db.String())  # should be nullable tbh
-    bio = db.Column(db.Text)
-    position = db.Column(db.String(200))  # should be nullable
-    election_id = db.Column(db.Integer, db.ForeignKey(
-        'election.id'), nullable=False)
-<<<<<<< HEAD
-    vote = db.relationship('Vote', backref='candidate', lazy='dynamic')
-=======
-    votes = db.relationship('Vote', backref='candidate', lazy='dynamic')
->>>>>>> 72aae7a1e5e0973c55a61977d69135be2dcad0b6
-
-    def __repr__(self):
-        return f'<Candidate {self.name}>'
-=======
     def as_dict(self):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}
->>>>>>> dac5e437c6a00c8df029b2f4a0c40084fbdb5376
 
 
 class Status(db.Model):
