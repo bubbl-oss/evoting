@@ -41,6 +41,8 @@ venv
 app.db
 microblog.log*
 
+*.db
+
 log
 logs
 

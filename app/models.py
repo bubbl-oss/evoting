@@ -48,13 +48,13 @@ class Status(db.Model):
 class Election(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     name = db.Column(db.String(), nullable=False, index=True)
     description = db.Column(db.String())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     modified_at = db.Column(db.DateTime, default=datetime.utcnow)
-    date_of_election = db.Column(db.DateTime, index=True)
-    time_of_election = db.Column(db.DateTime, index=True)
+    starting_at = db.Column(db.DateTime, index=True)
     ending_at = db.Column(db.DateTime)
     link = db.Column(db.String())
     status_id = db.Column(db.Integer, db.ForeignKey(

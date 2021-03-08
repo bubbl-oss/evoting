@@ -14,7 +14,6 @@ flask-sqlalchemy = "*"
 flask-login = "*"
 flask-migrate = "*"
 flask-admin = "*"
-flask-bcrypt = "*"
 
 [requires]
 python_version = "3.7"
