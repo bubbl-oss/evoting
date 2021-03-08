@@ -3,11 +3,12 @@ from datetime import datetime, time
 from app import app, db
 import json
 import uuid
+import string
+import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
-from sqlalchemy import and_
 
 # I WILL ADD COMMENTS LATER
 
@@ -73,8 +74,11 @@ def create_election():
         if request.method == 'POST':
             pending_status = Status.query.get(1)
             random_link = uuid.uuid4()
+            slug = ''.join(random.choices(string.ascii_uppercase + 
+                            string.ascii_lowercase + string.punctuation + 
+                            string.digits, k = 10)) 
 
-            election = Election(owner=current_user, name=form.name.data,
+            election = Election(owner=current_user, slug=slug, name=form.name.data,
                                 starting_at=form.starting_at.data,
                                 ending_at=form.ending_at.data,
                                 description=form.description.data,
@@ -118,7 +122,7 @@ def delete_election(link):
 
     for c in election.candidates.all():
         db.session.delete(c)
-
+    
     for v in election.votes.all():
         db.session.delete(v)
 
@@ -250,7 +254,7 @@ def delete_candidate(link):
     return redirect(url_for('missing_route'))
 
 
-@app.route("/election/<link>/vote", methods=['GET', 'POST'])
+@app.route("/election/<link>/vote-candidate", methods=['GET', 'POST'])
 @login_required
 def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
@@ -273,18 +277,27 @@ def voting_pass_link(link):
                 return redirect(url_for('voting_pass_link', link=link))
             else:
                 flash(f'Happy voting', 'success')
-                return redirect(url_for('election_vote', link=link))
+                slug = election.slug
+                return redirect(url_for('election_vote', link=link, slug=slug))
     return render_template('voting_pass_link.html', form=form)
 
 
-@app.route("/election/<link>/vote/candidate", methods=['GET', 'POST'])
+@app.route("/election/<link>/vote-candidate/<slug>", methods=['GET', 'POST'])
 @login_required
-def election_vote(link):
+def election_vote(link, slug):
     election = Election.query.filter_by(link=link).first()
+    
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
         return redirect(url_for('missing_route'))
     candidates = election.candidates
+
+
+    # if election.password is not None:
+    #     password = bcrypt.generate_password_hash(election.password)
+    # else:
+    #     password = ''.join(random.choices(string.ascii_uppercase + 
+    #                         string.ascii_lowercase + string.digits, k = 10))
 
     form = VotingForm()
     form.candidates.choices = [(candidate.id, candidate.name)
