@@ -8,7 +8,7 @@ import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
-from app.forms import ElectionForm, VotePasswordForm, VotingForm
+from app.forms import ElectionForm, VotePasswordForm, VotingForm, ResultForm
 
 # I WILL ADD COMMENTS LATER
 
@@ -99,15 +99,18 @@ def create_election():
     return render_template("election_form.html", title="Create Election", form=form, count_candidates=2)
 
 
-@app.route("/election/<link>")
+@app.route("/election/<link>", methods=['GET', 'POST'])
 def election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
         flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
-    if election.owner.id == current_user.id:
-        statuses = Status.query.all()
-    return render_template('election.html', title=election.name, election=election, statuses=statuses)
+    statuses = Status.query.all()
+    
+    form = ResultForm()
+    if form.validate_on_submit():
+        return redirect(url_for('result', link=election.link, slug=election.slug))
+    return render_template('election.html', title=election.name, election=election, statuses=statuses, form=form)
 
 
 @app.route("/election/<link>/delete")
@@ -123,8 +126,9 @@ def delete_election(link):
     for c in election.candidates.all():
         db.session.delete(c)
     
-    for v in election.votes.all():
-        db.session.delete(v)
+    if election.votes.all() is not None:
+        for v in election.votes.all():
+            db.session.delete(v)
 
     db.session.delete(election)
     db.session.commit()
@@ -266,8 +270,6 @@ def voting_pass_link(link):
     if election is None:
         flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
-    #this is redundant
-    #password = election.password
 
     form = VotePasswordForm()
     if form.validate_on_submit():
@@ -286,18 +288,13 @@ def voting_pass_link(link):
 @login_required
 def election_vote(link, slug):
     election = Election.query.filter_by(link=link).first()
+
     
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
         return redirect(url_for('missing_route'))
     candidates = election.candidates
 
-
-    # if election.password is not None:
-    #     password = bcrypt.generate_password_hash(election.password)
-    # else:
-    #     password = ''.join(random.choices(string.ascii_uppercase + 
-    #                         string.ascii_lowercase + string.digits, k = 10))
 
     form = VotingForm()
     form.candidates.choices = [(candidate.id, candidate.name)
@@ -309,6 +306,10 @@ def election_vote(link, slug):
             db.session.delete(user_vote)
             db.session.commit()
 
+        #check if the total election votes is more than or equal to the number of voters; if yes redirect to vote_limit message
+        if election.votes.count() >= int(election.number_of_voters):
+            return redirect(url_for('vote_limit', link=link))
+
         voted = request.form['candidates']
         voted_candidate = Candidate.query.filter_by(id=voted).first()
         vote = Vote(user=current_user, election=election,
@@ -319,6 +320,20 @@ def election_vote(link, slug):
         return redirect(url_for('vote_success'))
     return render_template('election_vote.html', title="Vote", form=form, candidates=candidates)
 
+
+@app.route("/election/<link>/vote-candidate/<slug>/result", methods=['GET'])
+def result(link, slug):
+    election = Election.query.filter_by(link=link).first()
+    if election.status.name != "ended":
+        flash(f'The election hasnt ended yet chill bro.................or sis', 'danger')
+        return redirect(url_for('missing_route'))
+    return render_template('result.html', title='Result', election=election)
+
+
+@app.route("/election/<link>/max-voters", methods=['GET'])
+def vote_limit(link):
+    election = Election.query.filter_by(link=link).first()
+    return render_template('vote_limit_message.html', election=election)
 
 @app.route("/election/success", methods=['GET'])
 def vote_success():
