@@ -5,3 +5,6 @@ class Config(object):
     SECRET_KEY = os.environ.get('EVOTING_SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    # normal config thing to tell the app that APScheduler is enabled
+    SCHEDULER_API_ENABLED = True
