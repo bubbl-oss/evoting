@@ -1,0 +1,25 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+{% if election.candidates %}
+    <h4>{{ election.name }} Results</h4>
+    <table style="border: 1px solid green">
+        <thead>
+            <th>
+                Candidates
+            </th>
+            <th>
+                Number of Votes
+            </th>
+        </thead>
+        {% for c in election.candidates %}
+        <tr style="text-align:center">
+            <td>
+                {{ c.name }}
+            </td>
+            <td>{{ c.votes.count() }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+{% endblock %}

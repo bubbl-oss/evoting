@@ -126,8 +126,10 @@ def delete_election(link):
     for c in election.candidates.all():
         db.session.delete(c)
     
-    if election.votes.all() is not None:
-        for v in election.votes.all():
+    votes = election.votes.all()
+    
+    if votes is not None:
+        for v in votes:
             db.session.delete(v)
 
     db.session.delete(election)
