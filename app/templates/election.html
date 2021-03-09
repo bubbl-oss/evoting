@@ -4,8 +4,14 @@
 <div>
     <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
     <p>This is the election link</p>
-    <h3 id="urlText" style="color: lime;background-color: gray;">{{ url_for('voting_pass_link', link=election.link, _external=True) }} </h3>
-        
+    <!-- TODO: we will change this to a package later -->
+    <h3 id="urlText" style="color: lime;background-color: lightblue;"><a
+           href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Election link</a> <button
+                id="copy-election-link"
+                data-clipboard-text="{{ url_for('voting_pass_link', link=election.link, _external=True) }}"
+                onclick="copy('copy-election-link')">Share</button>
+    </h3>
+    <!-- TODO: copy link will be share link later -->
     {% if election.owner.id == current_user.id %}
     <a href="{{ url_for('update_election', link=election.link) }}">edit</a>
     <a href="{{ url_for('delete_election', link=election.link) }}">delete</a>
@@ -18,6 +24,10 @@
     {% endif %}
 
     <h3>Scheduled for: {{ election.starting_at }} </h3>
+    <h3>Description:</h3>
+    <p>
+        {{ election.description or 'No description' }}
+    </p>
 
     {% if election.owner.id == current_user.id and statuses %}
     <form action="/election/{{ election.link }}/change-status" method="POST">
@@ -62,14 +72,69 @@
         {% endfor %}
     </table>
     {% endif %}
-    <p>
-        {{ election.description or 'No description' }}
-    </p>
+
+    <!-- TODO: we will add better checks later -->
+    {% if election.status.name == 'ended' %}
+    <h3>Results <button id="copy-election-results-link"
+                data-clipboard-text="{{ url_for('election', link=election.link, _external=True) }}#results"
+                onclick="copy('copy-election-results-link')">Share</button></button> </h3>
+    <section id="results" style="height: 300px; width: 100%;background-color: lightblue;">
+        Results will render here
+    </section>
+    {% endif %}
+
 </div>
+
 <p>
     <form action="{{ url_for('result', link=election.link, slug=election.slug) }}"  method="GET">
         {{ form.submit }}
     </form>
 </p>
 <!-- <h3 style="color: lime;background-color: gray;">{{ url_for('result', link=election.link, slug=election.slug, _external=True) }} </h3> -->
+
+<script>
+    if (window.ClipboardJS) {
+
+        function copy(element_id) {
+
+            var clippy = new ClipboardJS(`#${element_id}`);
+
+            clippy.on('success', function (e) {
+                e.clearSelection();
+                showCopyResponse(true, element_id);
+            });
+
+            clippy.on('error', function (e) {
+                showCopyResponse(false, element_id);
+            });
+        }
+
+    }
+
+    function showCopyResponse(success, element_id) {
+        let copyBtn = document.getElementById(element_id);
+
+        if (success) {
+            copyBtn.innerText = 'Copied!';
+            copyBtn.setAttribute('disabled', 'true');
+
+            // then after like 3 secs revert to normal...
+            setTimeout(function () {
+                copyBtn.innerText = 'Share';
+                copyBtn.removeAttribute('disabled');
+            }, 700);
+
+        } else {
+            copyBtn.innerText = 'Could not copy :( try again';
+            copyBtn.setAttribute('disabled', 'true');
+
+            // then after like 3 secs revert to normal...
+            setTimeout(function () {
+                copyBtn.innerText = 'Share';
+                copyBtn.removeAttribute('disabled');
+            }, 700);
+
+        }
+    }
+</script>
 {% endblock %}

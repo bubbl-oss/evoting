@@ -1,6 +1,6 @@
 from datetime import datetime, time
 
-from app import app, db
+from app import app, db, scheduler
 import json
 import uuid
 import string
@@ -105,6 +105,7 @@ def election(link):
     if election is None:
         flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
+      
     statuses = Status.query.all()
     
     form = ResultForm()
@@ -215,7 +216,7 @@ def change_election_status(link):
 
     status = Status.query.get(status_index)
 
-    election.status = status
+    election.status_id = status.id
     db.session.commit()
 
     # Add flash message here...
@@ -391,3 +392,32 @@ def remove_candidate():
 @app.route("/404", methods=["GET"])
 def missing_route():
     return render_template("404.html")
+
+
+# the update status function is the function to be ran repaeatedly hence the id
+# the function will be ran in 30 seconds intervals
+@scheduler.task('interval', id='do_update_status', seconds=10, misfire_grace_time=900)
+def update_status():
+    now = datetime.now()
+    app = scheduler.app
+    with app.app_context():
+        elections = Election.query.all()
+        statuses = Status.query.all()
+        for election in elections:
+            try:
+                # check if the status of the election is pending
+                if election.status == statuses[0]:
+                    #check if the current time is greater than the starting time of the election if yes set the status of the election to started
+                    if election.starting_at < now:
+                        election.status_id = 2
+                # check if the status of the election is started
+                elif election.status == statuses[1]:
+                    #check if the current time is greater than the ending time of the election if yes set the status of the election to ended
+                    if election.ending_at < now:
+                        election.status_id = 3
+            except Exception as e:
+                print(str(e))
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
