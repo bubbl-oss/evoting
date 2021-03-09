@@ -6,7 +6,7 @@ from datetime import datetime
 class Type(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(), default='individual')  # name of type
+    name = db.Column(db.String())  # name of type
     user = db.relationship('User', backref='type', lazy='dynamic')
 
     def __repr__(self):
@@ -35,7 +35,7 @@ class User(UserMixin, db.Model):
 class Status(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(), nullable=False, default='pending')
+    name = db.Column(db.String(), nullable=False)
     election = db.relationship('Election', backref='status', lazy='dynamic')
 
     def __repr__(self):
@@ -66,7 +66,7 @@ class Election(db.Model):
                         passive_deletes=True, cascade="all, delete")
     votes = db.relationship('Vote', backref='election', lazy='dynamic', 
                             passive_deletes=True, cascade="all, delete")
-    result = db.relationship('Result', backref='candidate', lazy='dynamic', 
+    result = db.relationship('Result', backref='election', lazy='dynamic', 
                             passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
@@ -86,7 +86,7 @@ class Candidate(db.Model):
         'election.id', ondelete='CASCADE'), nullable=False)
     votes = db.relationship('Vote', backref='candidate', lazy='dynamic', 
                             passive_deletes=True, cascade="all, delete")
-    result = db.relationship('Result', backref='candidate_result', lazy='dynamic', 
+    result = db.relationship('Result', backref='candidate', lazy='dynamic', 
                             passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
@@ -119,7 +119,7 @@ class Result(db.Model):
         'election.id', ondelete='CASCADE'), nullable=False)
     candidate_id = db.Column(db.Integer, db.ForeignKey(
         'candidate.id', ondelete='CASCADE'), nullable=False)
-    total_votes = db.Column(db.String())
+    total_votes = db.Column(db.Integer)
 
 
 @login.user_loader
