@@ -16,8 +16,12 @@
     <a href="{{ url_for('update_election', link=election.link) }}">edit</a>
     <a href="{{ url_for('delete_election', link=election.link) }}">delete</a>
     {% endif %}
+    
     <h4> Created by: {{ election.owner.email }} </h4>
+
+    {% if election.owner.id == current_user.id %}
     <h3>Created: {{ election.created_at }} </h3>
+    {% endif %}
 
     <h3>Scheduled for: {{ election.starting_at }} </h3>
     <h3>Description:</h3>
@@ -80,6 +84,13 @@
     {% endif %}
 
 </div>
+
+<p>
+    <form action="{{ url_for('result', link=election.link, slug=election.slug) }}"  method="GET">
+        {{ form.submit }}
+    </form>
+</p>
+<!-- <h3 style="color: lime;background-color: gray;">{{ url_for('result', link=election.link, slug=election.slug, _external=True) }} </h3> -->
 
 <script>
     if (window.ClipboardJS) {
