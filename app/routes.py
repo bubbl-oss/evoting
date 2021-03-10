@@ -8,7 +8,7 @@ import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
-from app.forms import ElectionForm, VotePasswordForm, VotingForm, ResultForm
+from app.forms import ElectionForm, VotePasswordForm, VotingForm
 
 # I WILL ADD COMMENTS LATER
 
@@ -107,11 +107,7 @@ def election(link):
         return redirect(url_for('missing_route'))
       
     statuses = Status.query.all()
-    
-    form = ResultForm()
-    if form.validate_on_submit():
-        return redirect(url_for('result', link=election.link, slug=election.slug))
-    return render_template('election.html', title=election.name, election=election, statuses=statuses, form=form)
+    return render_template('election.html', title=election.name, election=election, statuses=statuses)
 
 
 @app.route("/election/<link>/delete")
@@ -127,8 +123,9 @@ def delete_election(link):
     for c in election.candidates.all():
         db.session.delete(c)
     
-    if election.votes.all() is not None:
-        for v in election.votes.all():
+    votes = election.votes.all()
+    if votes is not None:
+        for v in votes:
             db.session.delete(v)
 
     db.session.delete(election)
