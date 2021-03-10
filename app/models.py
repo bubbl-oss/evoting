@@ -1,6 +1,8 @@
+from app.tools import calculate_election_result
 from app import db, login
 from flask_login import UserMixin
 from datetime import datetime
+from sqlalchemy import event
 
 
 class Type(db.Model):
@@ -133,3 +135,20 @@ class Result(db.Model):
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
+
+# <=== EVENTS ===>
+# listens for when Election.status_id is changed (set) then executes the given function...
+# check for SQLAlchemy Events
+@event.listens_for(Election.status_id, 'set')
+def calculate_result(target, newvalue, oldvalue, initiator):
+    # tbh, we should fetch the Status by their ids but mehn I want to reduce Database callllllssss
+    # so lets hope that the Statuses have the right ids :0
+    # 1 - pending
+    # 2 - cancelled
+    # 3 - ended
+    # 4 - started
+    # if Election is moving from started to ended...
+    if oldvalue == 4 and newvalue == 3:
+        calculate_election_result(target, Result, db)
+    # We can do more things depending on the scenario

@@ -217,19 +217,10 @@ def change_election_status(link):
         started -> cancelled or started -> ended
         ended -> started?
     """
-    # check if the status is changing from started to ended
-    if election.status.name == 'started' and status.name == 'ended':
-        result = calculate_election_result(election)
-        if result is not None:
-            db.session.add(result)
-        # by this point, the result has already been updated and wil be saved in the db
-        # when you call '...commit()' below
-
     election.status_id = status.id
 
     db.session.commit()
 
-    # Add flash message here...
     flash(f'Election status has been changed to {status.name}', 'success')
     return redirect(url_for('election', link=election.link))
 
@@ -237,10 +228,6 @@ def change_election_status(link):
 @app.route("/election/<link>/remove-candidate", methods=['GET', 'POST'])
 @login_required
 def delete_candidate(link):
-
-    # No need for this because flask_login provides a wrapper called login_required that does the same thing as this
-    # if not current_user.is_authenticated:
-    #     redirect(url_for('index'))
 
     election = Election.query.filter_by(link=link).first_or_404()
 

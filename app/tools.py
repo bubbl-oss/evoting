@@ -2,10 +2,11 @@
 
 """
 from datetime import datetime
-from app.models import Result
 
 
-def calculate_election_result(election):
+# I don't know if this is illegal in Python ^.^
+# passing whole ass objects like this :shrug:
+def calculate_election_result(election, Result, db):
     """Calculate Election Result
 
         Returns: 
@@ -15,7 +16,8 @@ def calculate_election_result(election):
 # user wants to change their election to ending. As per, the election is over
 # so now, calculate the results
 #
-# to calculate results of an election, count all the votes per candidate and then add them
+# to calculate results of an election, count all the votes per candidate and then create the Result object
+# with that number
     if election.candidates.count() > 1:
         for c in election.candidates:
             total_votes = c.votes.count()
@@ -27,5 +29,8 @@ def calculate_election_result(election):
                 current_result.total_votes = total_votes
                 current_result.modified_at = datetime.now()
             else:
-                return Result(election_id=election.id,
-                              candidate_id=c.id, total_votes=total_votes)
+                # if the result doesn't exist yet, create a new one.
+                r = Result(election_id=election.id,
+                           candidate_id=c.id, total_votes=total_votes)
+                db.session.add(r)
+        db.session.commit()
