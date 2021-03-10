@@ -409,7 +409,7 @@ def update_status_for_pending():
 
 
 # task is to run at the beginning of everyday
-@scheduler.task('date', id='update_status_for_started', run_date=datetime.now())
+@scheduler.task('cron', id='update_status_for_started', days='*')
 def update_status_for_started():
     app = scheduler.app
     with app.app_context():
