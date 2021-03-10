@@ -87,6 +87,20 @@ def create_election():
                                     random_link),
                                 password=form.password.data)
             db.session.add(election)
+
+            # the scheduler
+            try:
+                # schedule them to run the schuled_job method at their starting datetime
+                # notice the change to the id as you requested
+                scheduler.add_job(id="start "+election.name, func=schedule_job, trigger='date', run_date=election.starting_at, args=[election.id])    
+                print("start ", election.name, " done")
+                # schedule the jobs to run the schuled_job method at their ending datetime
+                # notice the change to the id as you requested
+                scheduler.add_job(id="end "+election.name, func=schedule_job, trigger='date', run_date=election.ending_at, args=[election.id])
+                print("end ", election.name, " done")
+            except Exception as e:
+                print(str(e))
+
             # create candidates
             for c in form.candidates.data:
                 candidate = Candidate(election=election,
@@ -405,32 +419,3 @@ def schedule_job(id):
         print(election.name, "has become: ", election.status.name)
     except Exception as e:
         db.session.rollback()
-
-# task is to run at the beginning of everyday
-@scheduler.task('cron', id='update_status_for_pending', days='*')
-def update_status_for_pending():
-    app = scheduler.app
-    with app.app_context():
-        # get elections to start today
-        elections = Election.query.filter(func.Date(Election.starting_at) == datetime.today().date()).all()
-        for election in elections: 
-            try:
-                # schedule them to run the schuled_job method at their starting datetime
-                scheduler.add_job(id="start"+election.name, func=schedule_job, trigger='date', run_date=election.starting_at, args=[election.id])    
-            except Exception as e:
-                print(str(e))
-
-
-# task is to run at the beginning of everyday
-@scheduler.task('cron', id='update_status_for_started', days='*')
-def update_status_for_started():
-    app = scheduler.app
-    with app.app_context():
-        # get elections to end today
-        elections = Election.query.filter(func.Date(Election.ending_at) == datetime.today().date()).all()
-        for election in elections:  
-            try:
-                # schedule the jobs to run the schuled_job method at their ending datetime
-                scheduler.add_job(id="end"+election.name, func=schedule_job, trigger='date', run_date=election.ending_at, args=[election.id])    
-            except Exception as e:
-                print(str(e))
