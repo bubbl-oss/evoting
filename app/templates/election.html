@@ -16,7 +16,7 @@
     <a href="{{ url_for('update_election', link=election.link) }}">edit</a>
     <a href="{{ url_for('delete_election', link=election.link) }}">delete</a>
     {% endif %}
-    
+
     <h4> Created by: {{ election.owner.email }} </h4>
 
     <h3>Created: {{ election.created_at }} </h3>
@@ -77,7 +77,39 @@
                 data-clipboard-text="{{ url_for('election', link=election.link, _external=True) }}#results"
                 onclick="copy('copy-election-results-link')">Share</button></button> </h3>
     <section id="results" style="height: 300px; width: 100%;background-color: lightblue;">
+        {% if election.results.count() > 0 %}
         Results will render here
+        <h5>Last Updated: {{ election.results[0].modified_at.strftime('%D - %T %p') }} </h5>
+        <table style="border-collapse: collapse;">
+            <thead style="border: 1px solid darkblue">
+                <th style="border: 1px solid darkblue">
+                    Candidate
+                </th>
+                <th style="border: 1px solid darkblue">
+                    Total Votes
+                </th>
+            </thead>
+
+            <tbody style="border: 1px solid darkblue">
+                {% for r in election.results %}
+                <tr style="border: 1px solid darkblue">
+                    <td style="border: 1px solid darkblue">
+                        {{ r.candidate.name }}
+                    </td>
+                    <td style="border: 1px solid darkblue">
+                        {{ r.total_votes }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+
+        </table>
+        {% else %}
+        <div>
+            No one has voted :/
+        </div>
+        {% endif %}
     </section>
     {% endif %}
 

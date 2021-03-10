@@ -1,6 +1,9 @@
 from app import db, login
 from flask_login import UserMixin
 from datetime import datetime
+from sqlalchemy import event
+from app.tools import calculate_election_result
+from app.constants import eStatus
 
 
 class Type(db.Model):
@@ -62,12 +65,12 @@ class Election(db.Model):
     number_of_voters = db.Column(db.String(), nullable=False)
     password = db.Column(db.String())
     candidates = db.relationship(
-                        'Candidate', backref='election', lazy='dynamic', 
-                        passive_deletes=True, cascade="all, delete")
-    votes = db.relationship('Vote', backref='election', lazy='dynamic', 
+        'Candidate', backref='election', lazy='dynamic',
+        passive_deletes=True, cascade="all, delete")
+    votes = db.relationship('Vote', backref='election', lazy='dynamic',
                             passive_deletes=True, cascade="all, delete")
-    result = db.relationship('Result', backref='election', lazy='dynamic', 
-                            passive_deletes=True, cascade="all, delete")
+    results = db.relationship('Result', backref='election', lazy='dynamic',
+                              passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
         return f'<Election {self.name}>'
@@ -84,10 +87,10 @@ class Candidate(db.Model):
     position = db.Column(db.String(200))
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id', ondelete='CASCADE'), nullable=False)
-    votes = db.relationship('Vote', backref='candidate', lazy='dynamic', 
+    votes = db.relationship('Vote', backref='candidate', lazy='dynamic',
                             passive_deletes=True, cascade="all, delete")
-    result = db.relationship('Result', backref='candidate', lazy='dynamic', 
-                            passive_deletes=True, cascade="all, delete")
+    result = db.relationship('Result', backref='candidate', lazy='dynamic',
+                             passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
         return f'<Candidate {self.name}>'
@@ -120,8 +123,33 @@ class Result(db.Model):
     candidate_id = db.Column(db.Integer, db.ForeignKey(
         'candidate.id', ondelete='CASCADE'), nullable=False)
     total_votes = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Result {self.election} {self.candidate}>'
+
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
 
 
 @login.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
+
+# <=== EVENTS ===>
+# listens for when Election.status_id is changed (set) then executes the given function...
+# check for SQLAlchemy Events
+@event.listens_for(Election.status_id, 'set')
+def calculate_result(target, newvalue, oldvalue, initiator):
+    # tbh, we should fetch the Status by their ids but mehn I want to reduce Database callllllssss
+    # so lets hope that the Statuses have the right ids :0
+    # 1 - pending
+    # 2 - cancelled
+    # 3 - ended
+    # 4 - started
+    # if Election is moving from started to ended...
+    if oldvalue == eStatus.STARTED.value and newvalue == eStatus.ENDED.value:
+        calculate_election_result(target, Result, db)
+    # We can do more things depending on the scenario

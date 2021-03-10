@@ -15,7 +15,7 @@ convention = {
     "pk": "pk_%(table_name)s"
 }
 
-#initialize APscheduler
+# initialize APscheduler
 scheduler = APScheduler()
 
 metadata = MetaData(naming_convention=convention)
@@ -35,5 +35,4 @@ login = LoginManager(app)
 login.login_view = 'index'
 
 
-
-from app import routes, models, errors, admin_view
+from app import routes, models, errors, admin_view, constants
