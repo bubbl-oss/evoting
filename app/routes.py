@@ -7,6 +7,7 @@ import uuid
 import string
 import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
+from sqlalchemy import func
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote, Result
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
@@ -71,6 +72,7 @@ def create_election():
 
     form = ElectionForm()
     if form.validate_on_submit():
+        # is this necessary
         print(form.errors)
         if request.method == 'POST':
             pending_status = Status.query.get(1)
@@ -87,6 +89,7 @@ def create_election():
                                     random_link),
                                 password=form.password.data)
             db.session.add(election)
+            
             # create candidates
             for c in form.candidates.data:
                 candidate = Candidate(election=election,
@@ -95,6 +98,18 @@ def create_election():
                 db.session.add(candidate)
 
             db.session.commit()
+
+            # the scheduler
+            try:
+                # schedule them to run the schuled_job method at their starting datetime
+                # notice the change to the id as you requested
+                scheduler.add_job(id="start "+election.name, func=schedule_job, trigger='date', run_date=election.starting_at, args=[election.id])    
+                # schedule the jobs to run the schuled_job method at their ending datetime
+                # notice the change to the id as you requested
+                scheduler.add_job(id="end "+election.name, func=schedule_job, trigger='date', run_date=election.ending_at, args=[election.id])
+            except Exception as e:
+                print(str(e))
+
             flash(f'Candidates and election created succesfully', 'success')
         return redirect(url_for('election', link=random_link))
     return render_template("election_form.html", title="Create Election", form=form, count_candidates=2)
@@ -389,32 +404,15 @@ def remove_candidate():
 def missing_route():
     return render_template("404.html")
 
-
-# TODO: move this to its own module
-# the update status function is the function to be ran repaeatedly hence the id
-# the function will be ran in 30 seconds intervals
-@scheduler.task('interval', id='do_update_status', seconds=10, misfire_grace_time=900)
-def update_status():
-    now = datetime.now()
-    app = scheduler.app
-    with app.app_context():
-        elections = Election.query.all()
-        statuses = Status.query.all()
-        for election in elections:
-            try:
-                # check if the status of the election is pending
-                if election.status == statuses[0]:
-                    # check if the current time is greater than the starting time of the election if yes set the status of the election to started
-                    if election.starting_at < now:
-                        election.status_id = 2
-                # check if the status of the election is started
-                elif election.status == statuses[1]:
-                    # check if the current time is greater than the ending time of the election if yes set the status of the election to ended
-                    if election.ending_at < now:
-                        election.status_id = 3
-            except Exception as e:
-                print(str(e))
-            try:
-                db.session.commit()
-            except Exception as e:
-                db.session.rollback()
+def schedule_job(id):
+    election = Election.query.get(id)
+    # if election status is pending set to started
+    if election.status_id == 1:
+        election.status_id = 2
+    # if election status is started set to ended
+    elif election.status_id == 2:
+        election.status_id = 3
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
