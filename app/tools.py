@@ -33,4 +33,7 @@ def calculate_election_result(election, Result, db):
                 r = Result(election_id=election.id,
                            candidate_id=c.id, total_votes=total_votes)
                 db.session.add(r)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()

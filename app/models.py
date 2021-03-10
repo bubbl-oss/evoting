@@ -1,8 +1,9 @@
-from app.tools import calculate_election_result
 from app import db, login
 from flask_login import UserMixin
 from datetime import datetime
 from sqlalchemy import event
+from app.tools import calculate_election_result
+from app.constants import eStatus
 
 
 class Type(db.Model):
@@ -149,6 +150,6 @@ def calculate_result(target, newvalue, oldvalue, initiator):
     # 3 - ended
     # 4 - started
     # if Election is moving from started to ended...
-    if oldvalue == 4 and newvalue == 3:
+    if oldvalue == eStatus.STARTED.value and newvalue == eStatus.ENDED.value:
         calculate_election_result(target, Result, db)
     # We can do more things depending on the scenario
