@@ -62,12 +62,12 @@ class Election(db.Model):
     number_of_voters = db.Column(db.String(), nullable=False)
     password = db.Column(db.String())
     candidates = db.relationship(
-                        'Candidate', backref='election', lazy='dynamic', 
-                        passive_deletes=True, cascade="all, delete")
-    votes = db.relationship('Vote', backref='election', lazy='dynamic', 
+        'Candidate', backref='election', lazy='dynamic',
+        passive_deletes=True, cascade="all, delete")
+    votes = db.relationship('Vote', backref='election', lazy='dynamic',
                             passive_deletes=True, cascade="all, delete")
-    result = db.relationship('Result', backref='election', lazy='dynamic', 
-                            passive_deletes=True, cascade="all, delete")
+    results = db.relationship('Result', backref='election', lazy='dynamic',
+                              passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
         return f'<Election {self.name}>'
@@ -84,10 +84,10 @@ class Candidate(db.Model):
     position = db.Column(db.String(200))
     election_id = db.Column(db.Integer, db.ForeignKey(
         'election.id', ondelete='CASCADE'), nullable=False)
-    votes = db.relationship('Vote', backref='candidate', lazy='dynamic', 
+    votes = db.relationship('Vote', backref='candidate', lazy='dynamic',
                             passive_deletes=True, cascade="all, delete")
-    result = db.relationship('Result', backref='candidate', lazy='dynamic', 
-                            passive_deletes=True, cascade="all, delete")
+    result = db.relationship('Result', backref='candidate', lazy='dynamic',
+                             passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
         return f'<Candidate {self.name}>'
@@ -120,6 +120,14 @@ class Result(db.Model):
     candidate_id = db.Column(db.Integer, db.ForeignKey(
         'candidate.id', ondelete='CASCADE'), nullable=False)
     total_votes = db.Column(db.Integer)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Result {self.election} {self.candidate}>'
+
+    def as_dict(self):
+        return {item.name: getattr(self, item.name) for item in self.__table__.columns}
 
 
 @login.user_loader

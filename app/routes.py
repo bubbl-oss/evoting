@@ -1,3 +1,4 @@
+from app.tools import calculate_election_result
 from datetime import datetime, time
 
 from app import app, db, scheduler
@@ -7,7 +8,7 @@ import string
 import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
 from flask_login import current_user, login_user, login_required, logout_user
-from app.models import Type, User, Election, Status, Candidate, Vote
+from app.models import Type, User, Election, Status, Candidate, Vote, Result
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
 
 # I WILL ADD COMMENTS LATER
@@ -74,9 +75,9 @@ def create_election():
         if request.method == 'POST':
             pending_status = Status.query.get(1)
             random_link = uuid.uuid4()
-            slug = ''.join(random.choices(string.ascii_uppercase + 
-                            string.ascii_lowercase + string.punctuation + 
-                            string.digits, k = 10)) 
+            slug = ''.join(random.choices(string.ascii_uppercase +
+                                          string.ascii_lowercase + string.punctuation +
+                                          string.digits, k=10))
 
             election = Election(owner=current_user, slug=slug, name=form.name.data,
                                 starting_at=form.starting_at.data,
@@ -105,7 +106,7 @@ def election(link):
     if election is None:
         flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
-      
+
     statuses = Status.query.all()
     return render_template('election.html', title=election.name, election=election, statuses=statuses)
 
@@ -122,7 +123,7 @@ def delete_election(link):
 
     for c in election.candidates.all():
         db.session.delete(c)
-    
+
     votes = election.votes.all()
     if votes is not None:
         for v in votes:
@@ -196,9 +197,6 @@ def update_election(link):
 @app.route("/election/<link>/change-status", methods=['POST'])
 @login_required
 def change_election_status(link):
-    # No need for this because flask_login provides a wrapper called login_required that does the same thing as this
-    # if not current_user.is_authenticated:
-    #     redirect(url_for('index'))
 
     election = Election.query.filter_by(link=link).first_or_404()
 
@@ -213,7 +211,22 @@ def change_election_status(link):
 
     status = Status.query.get(status_index)
 
+    """1. Status can only change step by step
+        pending -> cancelled or pending -> started
+        cancelled -> pending
+        started -> cancelled or started -> ended
+        ended -> started?
+    """
+    # check if the status is changing from started to ended
+    if election.status.name == 'started' and status.name == 'ended':
+        result = calculate_election_result(election)
+        if result is not None:
+            db.session.add(result)
+        # by this point, the result has already been updated and wil be saved in the db
+        # when you call '...commit()' below
+
     election.status_id = status.id
+
     db.session.commit()
 
     # Add flash message here...
@@ -287,12 +300,10 @@ def voting_pass_link(link):
 def election_vote(link, slug):
     election = Election.query.filter_by(link=link).first()
 
-    
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
         return redirect(url_for('missing_route'))
     candidates = election.candidates
-
 
     form = VotingForm()
     form.candidates.choices = [(candidate.id, candidate.name)
@@ -304,7 +315,7 @@ def election_vote(link, slug):
             db.session.delete(user_vote)
             db.session.commit()
 
-        #check if the total election votes is more than or equal to the number of voters; if yes redirect to vote_limit message
+        # check if the total election votes is more than or equal to the number of voters; if yes redirect to vote_limit message
         if election.votes.count() >= int(election.number_of_voters):
             return redirect(url_for('vote_limit', link=link))
 
@@ -332,6 +343,7 @@ def result(link, slug):
 def vote_limit(link):
     election = Election.query.filter_by(link=link).first()
     return render_template('vote_limit_message.html', election=election)
+
 
 @app.route("/election/success", methods=['GET'])
 def vote_success():
@@ -391,6 +403,7 @@ def missing_route():
     return render_template("404.html")
 
 
+# TODO: move this to its own module
 # the update status function is the function to be ran repaeatedly hence the id
 # the function will be ran in 30 seconds intervals
 @scheduler.task('interval', id='do_update_status', seconds=10, misfire_grace_time=900)
@@ -404,12 +417,12 @@ def update_status():
             try:
                 # check if the status of the election is pending
                 if election.status == statuses[0]:
-                    #check if the current time is greater than the starting time of the election if yes set the status of the election to started
+                    # check if the current time is greater than the starting time of the election if yes set the status of the election to started
                     if election.starting_at < now:
                         election.status_id = 2
                 # check if the status of the election is started
                 elif election.status == statuses[1]:
-                    #check if the current time is greater than the ending time of the election if yes set the status of the election to ended
+                    # check if the current time is greater than the ending time of the election if yes set the status of the election to ended
                     if election.ending_at < now:
                         election.status_id = 3
             except Exception as e:
