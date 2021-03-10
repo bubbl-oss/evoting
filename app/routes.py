@@ -6,6 +6,7 @@ import uuid
 import string
 import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
+from sqlalchemy import func
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Type, User, Election, Status, Candidate, Vote
 from app.forms import ElectionForm, VotePasswordForm, VotingForm
@@ -377,31 +378,46 @@ def remove_candidate():
 def missing_route():
     return render_template("404.html")
 
+def schedule_job(id):
+    election = Election.query.get(id)
+    # if election status is pending set to started
+    if election.status_id == 1:
+        election.status_id = 2
+    # if election status is started set to ended
+    elif election.status_id == 2:
+        election.status_id = 3
+    try:
+        db.session.commit()
+        # just to confirm new status
+        print(election.name, "has become: ", election.status.name)
+    except Exception as e:
+        db.session.rollback()
 
-# the update status function is the function to be ran repaeatedly hence the id
-# the function will be ran in 30 seconds intervals
-@scheduler.task('interval', id='do_update_status', seconds=10, misfire_grace_time=900)
-def update_status():
-    now = datetime.now()
+# task is to run at the beginning of everyday
+@scheduler.task('cron', id='update_status_for_pending', days='*')
+def update_status_for_pending():
     app = scheduler.app
     with app.app_context():
-        elections = Election.query.all()
-        statuses = Status.query.all()
-        for election in elections:
+        # get elections to start today
+        elections = Election.query.filter(func.Date(Election.starting_at) == datetime.today().date()).all()
+        for election in elections: 
             try:
-                # check if the status of the election is pending
-                if election.status == statuses[0]:
-                    #check if the current time is greater than the starting time of the election if yes set the status of the election to started
-                    if election.starting_at < now:
-                        election.status_id = 2
-                # check if the status of the election is started
-                elif election.status == statuses[1]:
-                    #check if the current time is greater than the ending time of the election if yes set the status of the election to ended
-                    if election.ending_at < now:
-                        election.status_id = 3
+                # schedule them to run the schuled_job method at their starting datetime
+                scheduler.add_job(id="start"+election.name, func=schedule_job, trigger='date', run_date=election.starting_at, args=[election.id])    
             except Exception as e:
                 print(str(e))
+
+
+# task is to run at the beginning of everyday
+@scheduler.task('date', id='update_status_for_started', run_date=datetime.now())
+def update_status_for_started():
+    app = scheduler.app
+    with app.app_context():
+        # get elections to end today
+        elections = Election.query.filter(func.Date(Election.ending_at) == datetime.today().date()).all()
+        for election in elections:  
             try:
-                db.session.commit()
+                # schedule the jobs to run the schuled_job method at their ending datetime
+                scheduler.add_job(id="end"+election.name, func=schedule_job, trigger='date', run_date=election.ending_at, args=[election.id])    
             except Exception as e:
-                db.session.rollback()
+                print(str(e))
