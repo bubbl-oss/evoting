@@ -103,11 +103,9 @@ def create_election():
                 # schedule them to run the schuled_job method at their starting datetime
                 # notice the change to the id as you requested
                 scheduler.add_job(id="start "+election.name, func=schedule_job, trigger='date', run_date=election.starting_at, args=[election.id])    
-                print("start ", election.name, election.id, " done")
                 # schedule the jobs to run the schuled_job method at their ending datetime
                 # notice the change to the id as you requested
                 scheduler.add_job(id="end "+election.name, func=schedule_job, trigger='date', run_date=election.ending_at, args=[election.id])
-                print("end ", election.name, election.id, " done")
             except Exception as e:
                 print(str(e))
 
