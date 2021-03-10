@@ -62,8 +62,12 @@ class Election(db.Model):
     number_of_voters = db.Column(db.String(), nullable=False)
     password = db.Column(db.String())
     candidates = db.relationship(
-        'Candidate', backref='election', lazy='dynamic')
-    votes = db.relationship('Vote', backref='election', lazy='dynamic')
+                        'Candidate', backref='election', lazy='dynamic', 
+                        passive_deletes=True, cascade="all, delete")
+    votes = db.relationship('Vote', backref='election', lazy='dynamic', 
+                            passive_deletes=True, cascade="all, delete")
+    result = db.relationship('Result', backref='election', lazy='dynamic', 
+                            passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
         return f'<Election {self.name}>'
@@ -79,8 +83,11 @@ class Candidate(db.Model):
     bio = db.Column(db.Text)
     position = db.Column(db.String(200))
     election_id = db.Column(db.Integer, db.ForeignKey(
-        'election.id'), nullable=False)
-    votes = db.relationship('Vote', backref='candidate', lazy='dynamic')
+        'election.id', ondelete='CASCADE'), nullable=False)
+    votes = db.relationship('Vote', backref='candidate', lazy='dynamic', 
+                            passive_deletes=True, cascade="all, delete")
+    result = db.relationship('Result', backref='candidate', lazy='dynamic', 
+                            passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
         return f'<Candidate {self.name}>'
@@ -94,9 +101,9 @@ class Vote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     election_id = db.Column(db.Integer, db.ForeignKey(
-        'election.id'), nullable=False)
+        'election.id', ondelete='CASCADE'), nullable=False)
     candidate_id = db.Column(db.Integer, db.ForeignKey(
-        'candidate.id'), nullable=False)
+        'candidate.id', ondelete='CASCADE'), nullable=False)
     password = db.Column(db.String())
 
     def __repr__(self):
@@ -104,6 +111,15 @@ class Vote(db.Model):
 
     def as_dict(self):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}
+
+
+class Result(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    election_id = db.Column(db.ForeignKey(
+        'election.id', ondelete='CASCADE'), nullable=False)
+    candidate_id = db.Column(db.Integer, db.ForeignKey(
+        'candidate.id', ondelete='CASCADE'), nullable=False)
+    total_votes = db.Column(db.Integer)
 
 
 @login.user_loader

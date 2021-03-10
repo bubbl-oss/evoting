@@ -29,12 +29,6 @@ class ElectionForm(FlaskForm):
     submit = SubmitField('Generate Link')
 
 
-# def status(request, id):
-#     status = Status.query.get(id)
-#     form = ElectionForm(request.POST, obj=status)
-#     form.status_id.choices = [(s.id, s.status) for s in Status.query.all()]
-
-
 class VotePasswordForm(FlaskForm):
     password = StringField('Password')
     submit = SubmitField('Continue')
