@@ -37,3 +37,16 @@ def calculate_election_result(election, Result, db):
             db.session.commit()
         except:
             db.session.rollback()
+
+# delete all data in tables...
+# TODO: add citation!
+
+
+def clear_data(db):
+    """Clear all the data in the tables without dropping the tables
+    """
+    meta = db.metadata
+    for table in reversed(meta.sorted_tables):
+        print('Clear table %s', table)
+        db.session.execute(table.delete())
+    db.session.commit()
