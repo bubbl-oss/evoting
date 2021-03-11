@@ -10,5 +10,9 @@
         {% endif %}
 
         <a href="{{ url_for('election', link=election.link) }}">View</a>
+
+        {% if election.status.name == 'started' %}
+        <a href="{{ url_for('voting_pass_link', link=election.link) }}">Vote</a>
+        {% endif %}
     </td>
 </tr>

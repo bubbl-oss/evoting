@@ -1,3 +1,4 @@
+from flask.helpers import make_response
 from app.tools import calculate_election_result
 from datetime import datetime, time
 
@@ -87,9 +88,9 @@ def create_election():
                                 description=form.description.data,
                                 status=pending_status, number_of_voters=form.number_of_voters.data, link=str(
                                     random_link),
-                                password=form.password.data)
+                                password=str(form.password.data).lower())
             db.session.add(election)
-            
+
             # create candidates
             for c in form.candidates.data:
                 candidate = Candidate(election=election,
@@ -103,10 +104,12 @@ def create_election():
             try:
                 # schedule them to run the schuled_job method at their starting datetime
                 # notice the change to the id as you requested
-                scheduler.add_job(id="start "+election.name, func=schedule_job, trigger='date', run_date=election.starting_at, args=[election.id])    
+                scheduler.add_job(id="start " + election.name, func=schedule_job,
+                                  trigger='date', run_date=election.starting_at, args=[election.id])
                 # schedule the jobs to run the schuled_job method at their ending datetime
                 # notice the change to the id as you requested
-                scheduler.add_job(id="end "+election.name, func=schedule_job, trigger='date', run_date=election.ending_at, args=[election.id])
+                scheduler.add_job(id="end " + election.name, func=schedule_job,
+                                  trigger='date', run_date=election.ending_at, args=[election.id])
             except Exception as e:
                 print(str(e))
 
@@ -171,7 +174,7 @@ def update_election(link):
         election.ending_at = form.ending_at.data
         election.number_of_voters = form.number_of_voters.data
         election.description = form.description.data
-        election.password = form.password.data
+        election.password = str(form.password.data).lower()
 
 # first check if these candidates already exist. If they do, don't create them again
         print(form.candidates.data)
@@ -271,7 +274,7 @@ def delete_candidate(link):
     return redirect(url_for('missing_route'))
 
 
-@app.route("/election/<link>/vote-candidate", methods=['GET', 'POST'])
+@app.route("/election/<link>/vote/pass", methods=['GET', 'POST'])
 @login_required
 def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
@@ -292,15 +295,27 @@ def voting_pass_link(link):
                 return redirect(url_for('voting_pass_link', link=link))
             else:
                 flash(f'Happy voting', 'success')
-                slug = election.slug
-                return redirect(url_for('election_vote', link=link, slug=slug))
+                # add voting cookie with value of election id and expiration at the election
+                # ending time...
+                res = make_response(
+                    redirect(url_for('election_vote', link=link)))
+                res.set_cookie('evoting-user-can-vote',
+                               str(election.id), expires=int(datetime.timestamp(election.ending_at)))
+
+                return res
     return render_template('voting_pass_link.html', form=form)
 
 
-@app.route("/election/<link>/vote-candidate/<slug>", methods=['GET', 'POST'])
+@app.route("/election/<link>/vote/cast", methods=['GET', 'POST'])
 @login_required
-def election_vote(link, slug):
+def election_vote(link):
     election = Election.query.filter_by(link=link).first()
+
+    cookie = request.cookies.get('evoting-user-can-vote')
+    if cookie is None:
+        # user is not authenticated for this election and needs to enter password
+        flash(f'Login to Election to vote', 'error')
+        return redirect(url_for('voting_pass_link', link=link))
 
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
@@ -328,17 +343,21 @@ def election_vote(link, slug):
         db.session.add(vote)
         db.session.commit()
         flash(f'You have successfully voted; may the odds forever be in your favour', 'success')
-        return redirect(url_for('vote_success'))
+        # delete cookie for this election...
+        res = make_response(redirect(url_for('vote_success')))
+        res.set_cookie('evoting-user-can-vote', '', expires=0)
+        return res
     return render_template('election_vote.html', title="Vote", form=form, candidates=candidates)
 
 
-@app.route("/election/<link>/vote-candidate/<slug>/result", methods=['GET'])
-def result(link, slug):
+@app.route("/election/<link>/vote/result", methods=['GET'])
+def result(link):
     election = Election.query.filter_by(link=link).first()
-    if election.status.name != "ended":
-        flash(f'The election hasnt ended yet chill bro.................or sis', 'danger')
-        return redirect(url_for('missing_route'))
-    return render_template('result.html', title='Result', election=election)
+    return redirect(url_for('election', link=link) + '#results')
+    # if election.status.name != "ended":
+    #     flash(f'The election hasnt ended yet chill bro.................or sis', 'danger')
+    #     return redirect(url_for('missing_route'))
+    # return render_template('result.html', title='Result', election=election)
 
 
 @app.route("/election/<link>/max-voters", methods=['GET'])
@@ -403,6 +422,7 @@ def remove_candidate():
 @app.route("/404", methods=["GET"])
 def missing_route():
     return render_template("404.html")
+
 
 def schedule_job(id):
     election = Election.query.get(id)
