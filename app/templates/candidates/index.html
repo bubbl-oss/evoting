@@ -10,6 +10,8 @@
 
     <a
        href="{{ url_for('update_candidate', link=candidate.position.election.link,position_id=candidate.position_id,candidate_id=candidate.id) }}"><button>Edit</button></a>
+    <a
+       href="{{ url_for('delete_candidate', link=candidate.position.election.link,position_id=candidate.position_id,candidate_id=candidate.id) }}"><button>Delete</button></a>
     <hr>
     <h4>Running for {{ position.title }} </h4>
     <h4>In the {{ position.election.name }} </h4>

@@ -36,7 +36,7 @@
 
         {% if current_user.is_authenticated %}
         <div>
-            Hello, {{ current_user.email.split("@")[0].split(".")[0].capitalize() }}
+            Hello, {{ current_user.get_name()[0].capitalize() }}
         </div>
         {% endif %}
     </div>

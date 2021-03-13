@@ -34,6 +34,13 @@ class User(UserMixin, db.Model):
     def as_dict(self):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}
 
+    def get_name(self):
+        """Splits 'firstname.lastname@aun.edu.ng' into a list ['firstname', 'lastname']
+        """
+        name = self.email[:self.email.find('@')]
+
+        return name.split('.')
+
 
 class Status(db.Model):
 

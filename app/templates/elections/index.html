@@ -3,32 +3,37 @@
 {% block content %}
 <div>
     <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
-    <p>This is the election link</p>
-    <!-- TODO: we will change this to a package later -->
+    <p>
+        {{ election.description or 'No description' }}
+    </p> <!-- TODO: we will change this to a package later -->
     <h3 id="urlText" style="color: lime;background-color: lightblue;"><a
-           href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Election link</a> <button
+           href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Vote Link</a> <button
                 id="copy-election-link"
                 data-clipboard-text="{{ url_for('voting_pass_link', link=election.link, _external=True) }}"
                 onclick="copy('copy-election-link')">Share</button>
     </h3>
     <!-- TODO: copy link will be share link later -->
     {% if election.owner.id == current_user.id %}
-    <a href="{{ url_for('update_election', link=election.link) }}">edit</a>
-    <a href="{{ url_for('delete_election', link=election.link) }}">delete</a>
+    <a href="{{ url_for('update_election', link=election.link) }}">
+        <button>edit</button>
+    </a>
+    <a href="{{ url_for('delete_election', link=election.link) }}">
+        <button>delete</button>
+    </a>
     {% endif %}
+    <hr>
 
-    <h4> Created by: {{ election.owner.email }} </h4>
+    <h4> Created by:
+        {{ election.owner.get_name()[0].capitalize() }}
+        <!-- TODO: Print second name if available, without errors -->
+    </h4>
 
     <h3>Created: {{ election.created_at }} </h3>
 
     <h3>Scheduled for: {{ election.starting_at }} </h3>
-    <h3>Description:</h3>
-    <p>
-        {{ election.description or 'No description' }}
-    </p>
 
     {% if election.owner.id == current_user.id and statuses %}
-    <form action="/election/{{ election.link }}/change-status" method="POST">
+    <form action="{{ url_for('change_election_status', link=election.link) }}" method="POST">
         <!-- status -->
         {% for s in statuses %}
         <label>
@@ -57,19 +62,29 @@
     <table style="border: 1px solid green">
         {% for p in election.positions %}
         <tr>
-            <td colspan="2">
-                <h3>{{ p.title }}</h3>
+            <td colspan="3">
+                <a href="{{ url_for('position', link=election.link,position_id=p.id) }}">
+                    <h3>{{ p.title }}</h3>
+                </a>
             </td>
-            <td>
-                <a href="{{ url_for('position', link=election.link,position_id=p.id) }}"><button>View</button></a>
-                <button>Delete</button>
-                <button>Edit</button>
-            </td>
+        </tr>
+        <tr>
+            <th>
+                Name
+            </th>
+            <th>
+                Votes
+            </th>
+            <th>
+                IDK
+            </th>
         </tr>
         {% for c in p.candidates %}
         <tr style="border-bottom:2px solid lightblue">
             <td>
-                {{ c.name }}
+                <a href="{{ url_for('candidate', link=election.link,position_id=p.id,candidate_id=c.id) }}">
+                    <h4> {{ c.name }} </h4>
+                </a>
             </td>
             <td>{{ c.votes.count() }}</td>
             <td> Yeet</td>

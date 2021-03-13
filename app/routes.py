@@ -154,6 +154,47 @@ def update_election(link):
     return render_template("elections/form.html", title="Update Election", form=form, election=election)
 
 
+@app.route("/elections/<link>/delete")
+def delete_election(link):
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+    if election.owner.id != current_user.id:
+        flash(f'Your not the owner of the election', 'danger')
+        return redirect(url_for('index'))
+
+    db.session.delete(election)
+    db.session.commit()
+    flash(f'Election and candidates have been deleted', 'success')
+    return 'Election deleted successfully!'
+
+
+@app.route("/elections/<link>/change-status", methods=['POST'])
+@login_required
+def change_election_status(link):
+
+    election = Election.query.filter_by(link=link).first_or_404()
+
+    if election.owner != current_user:
+        flash(f'You\'re not the owner of the election', 'danger')
+        return redirect(url_for('index'))
+
+    status_index = request.form.get('status')
+
+    if status_index is None:
+        return redirect(url_for('missing_route'))
+
+    status = Status.query.get(status_index)
+
+    election.status_id = status.id
+
+    db.session.commit()
+
+    flash(f'Election status has been changed to {status.name}', 'success')
+    return redirect(url_for('election', link=election.link))
+
+
 @app.route("/elections/<link>/positions/new", methods=['GET', 'POST'])
 def new_position(link):
     election = Election.query.filter_by(link=link).first()
@@ -222,6 +263,23 @@ def update_position(link, position_id):
         form.description.data = position.description
 
         return render_template('positions/form.html', title='Update Position', form=form, position=position)
+
+
+@app.route("/elections/<link>/positions/<position_id>/delete", methods=['GET'])
+def delete_position(link, position_id):
+    position = Position.query.get_or_404(position_id)
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+    if election.owner.id != current_user.id:
+        flash(f'Your not the owner of the election', 'danger')
+        return redirect(url_for('index'))
+
+    db.session.delete(position)
+    db.session.commit()
+    flash(f'Position has been deleted', 'success')
+    return 'Position Deleted Successfully!'
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/new", methods=['GET', 'POST'])
@@ -296,8 +354,9 @@ def update_candidate(link, position_id, candidate_id):
         return render_template('candidates/form.html', title='Update Candidate', form=form)
 
 
-@app.route("/elections/<link>/delete")
-def delete_election(link):
+@app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>/delete", methods=['GET'])
+def delete_candidate(link, position_id, candidate_id):
+    candidate = Candidate.query.get_or_404(candidate_id)
     election = Election.query.filter_by(link=link).first()
     if election is None:
         flash(f'There is no such election', 'danger')
@@ -306,48 +365,15 @@ def delete_election(link):
         flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
-    for c in election.candidates.all():
-        db.session.delete(c)
-
-    votes = election.votes.all()
-    if votes is not None:
-        for v in votes:
-            db.session.delete(v)
-
-    db.session.delete(election)
+    db.session.delete(candidate)
     db.session.commit()
-    flash(f'Election and candidates have been deleted', 'success')
-    return redirect(url_for('dashboard'))
-
-
-@app.route("/elections/<link>/change-status", methods=['POST'])
-@login_required
-def change_election_status(link):
-
-    election = Election.query.filter_by(link=link).first_or_404()
-
-    if election.owner != current_user:
-        flash(f'Your not the owner of the election', 'danger')
-        return redirect(url_for('index'))
-
-    status_index = request.form.get('status')
-
-    if status_index is None:
-        return redirect(url_for('missing_route'))
-
-    status = Status.query.get(status_index)
-
-    election.status_id = status.id
-
-    db.session.commit()
-
-    flash(f'Election status has been changed to {status.name}', 'success')
-    return redirect(url_for('election', link=election.link))
+    flash(f'Candidate has been deleted', 'success')
+    return 'Candidate Deleted Successfully!'
 
 
 @app.route("/elections/<link>/remove-candidate", methods=['GET', 'POST'])
 @login_required
-def delete_candidate(link):
+def delete_candidate_http(link):
 
     election = Election.query.filter_by(link=link).first_or_404()
 

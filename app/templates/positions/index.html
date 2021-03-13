@@ -6,6 +6,7 @@
     <h4> {{ position.title }} </h4>
     <h4>In {{ election.name }} </h4>
     <a href="{{ url_for('update_position', link=election.link,position_id=position.id) }}"><button>Edit</button></a>
+    <a href="{{ url_for('delete_position', link=election.link,position_id=position.id) }}"><button>Delete</button></a>
     <hr>
     <a href="{{ url_for('new_candidate', link=election.link, position_id=position.id) }}"><button>Add Candidate</button>
     </a>
@@ -26,14 +27,16 @@
         {% for c in position.candidates %}
         <tr>
             <td>
-                {{ c.name }}
+                <a href="{{ url_for('candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}">
+                    <h4> {{ c.name }} </h4>
+                </a>
             </td>
             <td>{{ c.bio }}</td>
             <td>
                 <a
-                   href="{{ url_for('candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button>View</button></a>
-                <button>Delete</button>
-                <button>Edit</button>
+                   href="{{ url_for('update_candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button>Edit</button></a>
+                <a
+                   href="{{ url_for('delete_candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button>Delete</button></a>
             </td>
         </tr>
         {% endfor %}

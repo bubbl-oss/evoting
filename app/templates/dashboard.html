@@ -2,7 +2,7 @@
 
 {% block content %}
 <div>
-    <h2>Hello, {{ current_user.email.split('.')[0].capitalize() }} </h2>
+    <h2>Hello, {{ current_user.get_name()[0].capitalize() }} </h2>
     <ul>
         <li><a href="{{ url_for('new_election') }}"><button>New Election</button></a></li>
 
