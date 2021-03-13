@@ -2,6 +2,7 @@
 
 {% block content %}
 <div>
+    <span style="border: 2px solid goldenrod">Election</span>
     <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
     <p>
         {{ election.description or 'No description' }}

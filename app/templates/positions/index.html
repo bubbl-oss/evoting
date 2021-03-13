@@ -2,9 +2,14 @@
 
 {% block content %}
 <div>
-    <h14>Position</h14>
-    <h4> {{ position.title }} </h4>
-    <h4>In {{ election.name }} </h4>
+    <span style="border: 2px solid darkgreen">Position</span>
+    <h1> {{ position.title }} </h1>
+    <h5>In <a style="color: inherit;" href="{{ url_for('election', link=position.election.link) }}">{{ election.name
+            }}</a> </h5>
+    <p>
+        {{ position.description }}
+    </p>
+
     <a href="{{ url_for('update_position', link=election.link,position_id=position.id) }}"><button>Edit</button></a>
     <a href="{{ url_for('delete_position', link=election.link,position_id=position.id) }}"><button>Delete</button></a>
     <hr>

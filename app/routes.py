@@ -215,7 +215,7 @@ def new_position(link):
             flash(f'Error creating Position', 'success')
         return redirect(url_for('election', link=link))
 
-    return render_template('positions/form.html', title='New {election.name} Position', form=form, election=election)
+    return render_template('positions/form.html', title=f'New {election.name} Position', form=form, election=election)
 
 
 @app.route("/elections/<link>/positions/<position_id>", methods=['GET', 'POST'])
@@ -234,7 +234,7 @@ def position(link, position_id):
         flash(f'There is no such position', 'danger')
         return redirect(url_for('missing_route'))
 
-    return render_template('positions/index.html', title="{position.title} | {election.name}", election=election, position=position)
+    return render_template('positions/index.html', title=f"{position.title} | {election.name}", election=election, position=position)
 
 
 @app.route("/elections/<link>/positions/<position_id>/update", methods=['GET', 'POST'])
@@ -262,7 +262,7 @@ def update_position(link, position_id):
         form.title.data = position.title
         form.description.data = position.description
 
-        return render_template('positions/form.html', title='Update Position', form=form, position=position)
+        return render_template('positions/form.html', title=f'Update {position.title} position', form=form, position=position)
 
 
 @app.route("/elections/<link>/positions/<position_id>/delete", methods=['GET'])
@@ -279,7 +279,7 @@ def delete_position(link, position_id):
     db.session.delete(position)
     db.session.commit()
     flash(f'Position has been deleted', 'success')
-    return 'Position Deleted Successfully!'
+    return redirect(url_for('election', link=link))
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/new", methods=['GET', 'POST'])
@@ -304,7 +304,7 @@ def new_candidate(link, position_id):
         flash(f'Candidate added to position', 'success')
         return redirect(url_for('election', link=link))
 
-    return render_template('candidates/form.html', title='New {position.title} Candidate', form=form)
+    return render_template('candidates/form.html', title=f'New Candidate for {position.title}', form=form)
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>", methods=['GET', 'POST'])
@@ -324,7 +324,7 @@ def candidate(link, position_id, candidate_id):
         flash(f'There is no such candidate', 'danger')
         return redirect(url_for('missing_route'))
 
-    return render_template('candidates/index.html', title="{candidate.name} | {position.name} {position.election.name}", candidate=candidate, position=position)
+    return render_template('candidates/index.html', title=f"{candidate.name} | {position.title} in {position.election.name}", candidate=candidate, position=position)
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>/update", methods=['GET', 'POST'])
@@ -351,7 +351,7 @@ def update_candidate(link, position_id, candidate_id):
 
         form.name.data = candidate.name
         form.bio.data = candidate.bio
-        return render_template('candidates/form.html', title='Update Candidate', form=form)
+        return render_template('candidates/form.html', title=f'Update Candidate {candidate.name}', form=form)
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>/delete", methods=['GET'])
@@ -368,7 +368,9 @@ def delete_candidate(link, position_id, candidate_id):
     db.session.delete(candidate)
     db.session.commit()
     flash(f'Candidate has been deleted', 'success')
-    return 'Candidate Deleted Successfully!'
+    return redirect(url_for('election', link=link))
+
+# DEPRECATED
 
 
 @app.route("/elections/<link>/remove-candidate", methods=['GET', 'POST'])
@@ -493,6 +495,8 @@ def vote_limit(link):
 def vote_success():
     return render_template('vote_success_message.html')
 
+# NOT USED
+
 
 @app.route("/statuses")
 def get_statuses():
@@ -508,6 +512,7 @@ def logout_complete():
     return render_template("logout_complete.html", title="Logout Complete Page")
 
 
+# DEPRECATED
 @app.route("/add-candidate", methods=["GET", "POST"])
 def add_candidate():
 
@@ -534,6 +539,7 @@ def add_candidate():
     return render_template("partials/candidate_input.html", c=new_field)
 
 
+# DEPRECATED
 @app.route("/remove-candidate", methods=["GET", "POST"])
 def remove_candidate():
 
