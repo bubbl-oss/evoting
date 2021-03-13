@@ -1,0 +1,43 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div>
+    <h14>Position</h14>
+    <h4> {{ position.title }} </h4>
+    <h4>In {{ election.name }} </h4>
+    <a href="{{ url_for('update_position', link=election.link,position_id=position.id) }}"><button>Edit</button></a>
+    <hr>
+    <a href="{{ url_for('new_candidate', link=election.link, position_id=position.id) }}"><button>Add Candidate</button>
+    </a>
+
+
+    {% if position.candidates %}
+    <h4>Candidates</h4>
+    <table style="border: 1px solid green">
+        <thead>
+            <th>
+                Name
+            </th>
+            <th>
+                Bio
+            </th>
+            <th>Actions</th>
+        </thead>
+        {% for c in position.candidates %}
+        <tr>
+            <td>
+                {{ c.name }}
+            </td>
+            <td>{{ c.bio }}</td>
+            <td>
+                <a
+                   href="{{ url_for('candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button>View</button></a>
+                <button>Delete</button>
+                <button>Edit</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

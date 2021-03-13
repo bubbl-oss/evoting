@@ -49,24 +49,33 @@
     <div id="status_change_response"></div>
     {% endif %}
 
-    {% if election.candidates %}
-    <h4>Candidates</h4>
+    <a href="{{ url_for('new_position', link=election.link) }}"><button>Add Position</button> </a>
+
+    <!-- TODO: show candidates here too! -->
+    {% if election.positions %}
+    <h4>Positions</h4>
     <table style="border: 1px solid green">
-        <thead>
-            <th>
-                Name
-            </th>
-            <th>
-                Bio
-            </th>
-        </thead>
-        {% for c in election.candidates %}
+        {% for p in election.positions %}
         <tr>
+            <td colspan="2">
+                <h3>{{ p.title }}</h3>
+            </td>
+            <td>
+                <a href="{{ url_for('position', link=election.link,position_id=p.id) }}"><button>View</button></a>
+                <button>Delete</button>
+                <button>Edit</button>
+            </td>
+        </tr>
+        {% for c in p.candidates %}
+        <tr style="border-bottom:2px solid lightblue">
             <td>
                 {{ c.name }}
             </td>
-            <td>{{ c.bio }}</td>
+            <td>{{ c.votes.count() }}</td>
+            <td> Yeet</td>
+
         </tr>
+        {% endfor %}
         {% endfor %}
     </table>
     {% endif %}

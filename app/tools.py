@@ -18,25 +18,28 @@ def calculate_election_result(election, Result, db):
 #
 # to calculate results of an election, count all the votes per candidate and then create the Result object
 # with that number
-    if election.candidates.count() > 1:
-        for c in election.candidates:
-            total_votes = c.votes.count()
-            # find the result if it exists and update it!
-            current_result = Result.query.filter_by(election_id=election.id,
-                                                    candidate_id=c.id).first()
-            if current_result is not None:
-                # just update it if it already exists
-                current_result.total_votes = total_votes
-                current_result.modified_at = datetime.now()
-            else:
-                # if the result doesn't exist yet, create a new one.
-                r = Result(election_id=election.id,
-                           candidate_id=c.id, total_votes=total_votes)
-                db.session.add(r)
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
+# --- Do it for each of the Positions ---
+    for p in election.positions:
+
+        if p.candidates.count() > 1:
+            for c in p.candidates:
+                total_votes = c.votes.count()
+                # find the result if it exists and update it!
+                current_result = Result.query.filter_by(position_id=p.id,
+                                                        candidate_id=c.id).first()
+                if current_result is not None:
+                    # just update it if it already exists
+                    current_result.total_votes = total_votes
+                    current_result.modified_at = datetime.now()
+                else:
+                    # if the result doesn't exist yet, create a new one.
+                    r = Result(position_id=p.id,
+                               candidate_id=c.id, total_votes=total_votes)
+                    db.session.add(r)
+            try:
+                db.session.commit()
+            except:
+                db.session.rollback()
 
 # delete all data in tables...
 # TODO: add citation!
