@@ -2,16 +2,16 @@
 
 {% block content %}
 <div>
-    <h2>Hello, {{ current_user.email }} </h2>
+    <h2>Hello, {{ current_user.get_name()[0].capitalize() }} </h2>
     <ul>
-        <li><a href="{{ url_for('create_election') }}">Create new Election</a></li>
+        <li><a href="{{ url_for('new_election') }}"><button>New Election</button></a></li>
 
     </ul>
 
     <h3>Your elections</h3>
 
     {% if elections %}
-    <table style="border: 1px solid gold">
+    <table style="border: 2px solid lightblue;background-color: khaki;">
         <thead>
             <th>
                 Id

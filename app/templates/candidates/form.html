@@ -1,0 +1,28 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<h1> {{ 'New' if request.endpoint == 'new_candidate' else 'Update' }} Candidate</h1>
+
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.name.label }}<br>
+        {{ form.name(size=48) }}<br>
+        {% for error in form.name.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.bio.label }}<br>
+        {{ form.bio(size=140) }}<br>
+        {% for error in form.bio.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+
+    <hr>
+
+    <p>{{ form.submit(value='Submit') }}</p>
+
+</form>
+{% endblock %}

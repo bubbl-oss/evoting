@@ -1,0 +1,66 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<h1> {{ 'New' if request.endpoint == 'new_election' else 'Update' }} Election</h1>
+
+<form method="post">
+    {{ form.hidden_tag() }}
+    <p>
+        {{ form.name.label }}<br>
+        {{ form.name(size=48) }}<br>
+        {% for error in form.name.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        {{ form.description.label }}<br>
+        {{ form.description(size=140) }}<br>
+        {% for error in form.description.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        Starting At<br>
+        {{ form.starting_at(class='select_starttime') }}
+        {% for error in form.starting_at.errors %}
+        <span style="color: red;display: block">[{{ error }}]</span>
+        {% endfor %}
+        {% for error in form.starting_at.errors %}
+        <span style="color: red;display: block;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>
+        Ending At<br>
+        {{ form.ending_at(class='select_endtime') }}
+        {% for error in form.ending_at.errors %}
+        <span style="color: red;display: block">[{{ error }}]</span>
+        {% endfor %}
+        {% for error in form.ending_at.errors %}
+        <span style="color: red;display: block;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <!-- Render the status field if this is an update... -->
+    <p>
+        {{ form.number_of_voters.label }}<br>
+        {{ form.number_of_voters() }}<br>
+        {% for error in form.number_of_voters.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <hr>
+
+    </section>
+
+    <p>
+        {{ form.password.label }}<br>
+        {{ form.password(size=10, type='password') }}<br>
+        {% for error in form.password.errors %}
+        <span style="color: red;">[{{ error }}]</span>
+        {% endfor %}
+    </p>
+    <p>{{ form.submit(value='Submit') }}</p>
+
+
+
+</form>
+{% endblock %}

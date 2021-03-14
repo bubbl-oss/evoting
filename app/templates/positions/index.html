@@ -1,0 +1,51 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<div>
+    <span style="border: 2px solid darkgreen">Position</span>
+    <h1> {{ position.title }} </h1>
+    <h5>In <a style="color: inherit;" href="{{ url_for('election', link=position.election.link) }}">{{ election.name
+            }}</a> </h5>
+    <p>
+        {{ position.description }}
+    </p>
+
+    <a href="{{ url_for('update_position', link=election.link,position_id=position.id) }}"><button>Edit</button></a>
+    <a href="{{ url_for('delete_position', link=election.link,position_id=position.id) }}"><button>Delete</button></a>
+    <hr>
+    <a href="{{ url_for('new_candidate', link=election.link, position_id=position.id) }}"><button>Add Candidate</button>
+    </a>
+
+
+    {% if position.candidates %}
+    <h4>Candidates</h4>
+    <table style="border: 1px solid green">
+        <thead>
+            <th>
+                Name
+            </th>
+            <th>
+                Bio
+            </th>
+            <th>Actions</th>
+        </thead>
+        {% for c in position.candidates %}
+        <tr>
+            <td>
+                <a href="{{ url_for('candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}">
+                    <h4> {{ c.name }} </h4>
+                </a>
+            </td>
+            <td>{{ c.bio }}</td>
+            <td>
+                <a
+                   href="{{ url_for('update_candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button>Edit</button></a>
+                <a
+                   href="{{ url_for('delete_candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button>Delete</button></a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

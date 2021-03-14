@@ -10,8 +10,8 @@ import random
 from flask import render_template, request, url_for, redirect, abort, jsonify, flash
 from sqlalchemy import func
 from flask_login import current_user, login_user, login_required, logout_user
-from app.models import Type, User, Election, Status, Candidate, Vote, Result
-from app.forms import ElectionForm, VotePasswordForm, VotingForm
+from app.models import Position, Type, User, Election, Status, Candidate, Vote, Result
+from app.forms import CandidateForm, ElectionForm, PositionForm, VotePasswordForm, VotingForm
 
 # I WILL ADD COMMENTS LATER
 
@@ -65,11 +65,9 @@ def dashboard():
     return render_template("dashboard.html", title="User Dashboard", elections=elections)
 
 
-@app.route("/create-election", methods=['GET', 'POST'])
+@app.route("/elections/new", methods=['GET', 'POST'])
 @login_required
-def create_election():
-    # if user is authenticated, make the owner of the election the current logged in user
-    # if the user is not authenticated, redirect the user to the login page
+def new_election():
 
     form = ElectionForm()
     if form.validate_on_submit():
@@ -78,11 +76,8 @@ def create_election():
         if request.method == 'POST':
             pending_status = Status.query.get(1)
             random_link = uuid.uuid4()
-            slug = ''.join(random.choices(string.ascii_uppercase +
-                                          string.ascii_lowercase + string.punctuation +
-                                          string.digits, k=10))
 
-            election = Election(owner=current_user, slug=slug, name=form.name.data,
+            election = Election(owner=current_user, name=form.name.data,
                                 starting_at=form.starting_at.data,
                                 ending_at=form.ending_at.data,
                                 description=form.description.data,
@@ -90,13 +85,6 @@ def create_election():
                                     random_link),
                                 password=str(form.password.data).lower())
             db.session.add(election)
-
-            # create candidates
-            for c in form.candidates.data:
-                candidate = Candidate(election=election,
-                                      name=c['name'], bio=c['bio'])
-
-                db.session.add(candidate)
 
             db.session.commit()
 
@@ -113,12 +101,12 @@ def create_election():
             except Exception as e:
                 print(str(e))
 
-            flash(f'Candidates and election created succesfully', 'success')
+            flash(f'Election created succesfully', 'success')
         return redirect(url_for('election', link=random_link))
-    return render_template("election_form.html", title="Create Election", form=form, count_candidates=2)
+    return render_template("elections/form.html", title="New Election", form=form, count_candidates=2)
 
 
-@app.route("/election/<link>", methods=['GET', 'POST'])
+@app.route("/elections/<link>", methods=['GET', 'POST'])
 def election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
@@ -126,34 +114,10 @@ def election(link):
         return redirect(url_for('missing_route'))
 
     statuses = Status.query.all()
-    return render_template('election.html', title=election.name, election=election, statuses=statuses)
+    return render_template('elections/index.html', title=election.name, election=election, statuses=statuses)
 
 
-@app.route("/election/<link>/delete")
-def delete_election(link):
-    election = Election.query.filter_by(link=link).first()
-    if election is None:
-        flash(f'There is no such election', 'danger')
-        return redirect(url_for('missing_route'))
-    if election.owner.id != current_user.id:
-        flash(f'Your not the owner of the election', 'danger')
-        return redirect(url_for('index'))
-
-    for c in election.candidates.all():
-        db.session.delete(c)
-
-    votes = election.votes.all()
-    if votes is not None:
-        for v in votes:
-            db.session.delete(v)
-
-    db.session.delete(election)
-    db.session.commit()
-    flash(f'Election and candidates have been deleted', 'success')
-    return redirect(url_for('dashboard'))
-
-
-@app.route("/election/<link>/update", methods=['GET', 'POST'])
+@app.route("/elections/<link>/update", methods=['GET', 'POST'])
 def update_election(link):
     election = Election.query.filter_by(link=link).first()
     if election is None:
@@ -164,11 +128,8 @@ def update_election(link):
         return redirect(url_for('index'))
         # return abort(403) doesn't seem to work. not sure tho
 
-    candidates_ = election.candidates.all()
-    # rename the
-    form = ElectionForm(candidates=candidates_)
-    print(type(candidates_))
-    if form.validate_on_submit():
+    form = ElectionForm()
+    if form.validate_on_submit() and request.method == 'POST':
         election.name = form.name.data
         election.starting_at = form.starting_at.data
         election.ending_at = form.ending_at.data
@@ -176,24 +137,10 @@ def update_election(link):
         election.description = form.description.data
         election.password = str(form.password.data).lower()
 
-# first check if these candidates already exist. If they do, don't create them again
-        print(form.candidates.data)
-        for c in form.candidates.data:
-            # todo, move this to a model function
-            c_ = Candidate.query.get(c['id'])
-
-            if c_:
-                c_.name = c['name']
-                c_.bio = c['bio']
-                db.session.add(c_)
-            # else tis a new candidate
-            else:
-                candidate = Candidate(election=election,
-                                      name=c['name'], bio=c['bio'])
-                db.session.add(candidate)
-
         db.session.commit()
+
         flash(f'Election has been updated succesfully', 'success')
+
         return redirect(url_for('election', link=link))
 
     elif request.method == 'GET':
@@ -204,22 +151,33 @@ def update_election(link):
         form.number_of_voters.data = election.number_of_voters
         form.password.data = election.password
 
-        # TODO: render candidates too
-        candidates = to_json_array(election.candidates.all())
-
-        # fp = forms
-
-    return render_template("election_form.html", title="Update Election", form=form, count_candidates=len(candidates), candidates=json.dumps(candidates), election=election)
+    return render_template("elections/form.html", title="Update Election", form=form, election=election)
 
 
-@app.route("/election/<link>/change-status", methods=['POST'])
+@app.route("/elections/<link>/delete")
+def delete_election(link):
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+    if election.owner.id != current_user.id:
+        flash(f'Your not the owner of the election', 'danger')
+        return redirect(url_for('index'))
+
+    db.session.delete(election)
+    db.session.commit()
+    flash(f'Election and candidates have been deleted', 'success')
+    return 'Election deleted successfully!'
+
+
+@app.route("/elections/<link>/change-status", methods=['POST'])
 @login_required
 def change_election_status(link):
 
     election = Election.query.filter_by(link=link).first_or_404()
 
     if election.owner != current_user:
-        flash(f'Your not the owner of the election', 'danger')
+        flash(f'You\'re not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
     status_index = request.form.get('status')
@@ -229,12 +187,6 @@ def change_election_status(link):
 
     status = Status.query.get(status_index)
 
-    """1. Status can only change step by step
-        pending -> cancelled or pending -> started
-        cancelled -> pending
-        started -> cancelled or started -> ended
-        ended -> started?
-    """
     election.status_id = status.id
 
     db.session.commit()
@@ -243,9 +195,187 @@ def change_election_status(link):
     return redirect(url_for('election', link=election.link))
 
 
-@app.route("/election/<link>/remove-candidate", methods=['GET', 'POST'])
+@app.route("/elections/<link>/positions/new", methods=['GET', 'POST'])
+def new_position(link):
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+
+    form = PositionForm()
+    if form.validate_on_submit():
+        position = Position(
+            title=form.title.data, description=form.description.data, election_id=election.id)
+        try:
+            db.session.add(position)
+            db.session.commit()
+            flash(f'Position added to Election', 'success')
+        except:
+            db.session.rollback()
+            flash(f'Error creating Position', 'success')
+        return redirect(url_for('election', link=link))
+
+    return render_template('positions/form.html', title=f'New {election.name} Position', form=form, election=election)
+
+
+@app.route("/elections/<link>/positions/<position_id>", methods=['GET', 'POST'])
+def position(link, position_id):
+
+    election = Election.query.filter_by(link=link).first()
+
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+
+    position = Position.query.filter_by(
+        election=election, id=position_id).first()
+
+    if position is None:
+        flash(f'There is no such position', 'danger')
+        return redirect(url_for('missing_route'))
+
+    return render_template('positions/index.html', title=f"{position.title} | {election.name}", election=election, position=position)
+
+
+@app.route("/elections/<link>/positions/<position_id>/update", methods=['GET', 'POST'])
+def update_position(link, position_id):
+    # TODO: add a guard to prevent unauthorized access!
+
+    position = Position.query.get(position_id)
+
+    if position is None:
+        flash(f'There is no such position', 'danger')
+        return redirect(url_for('missing_route'))
+
+    form = PositionForm()
+    if form.validate_on_submit() and request.method == 'POST':
+        position.title = form.title.data
+        position.description = form.description.data
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+        flash(f'Position updated successfully!', 'success')
+        return redirect(url_for('election', link=link))
+    elif request.method == 'GET':
+
+        form.title.data = position.title
+        form.description.data = position.description
+
+        return render_template('positions/form.html', title=f'Update {position.title} position', form=form, position=position)
+
+
+@app.route("/elections/<link>/positions/<position_id>/delete", methods=['GET'])
+def delete_position(link, position_id):
+    position = Position.query.get_or_404(position_id)
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+    if election.owner.id != current_user.id:
+        flash(f'Your not the owner of the election', 'danger')
+        return redirect(url_for('index'))
+
+    db.session.delete(position)
+    db.session.commit()
+    flash(f'Position has been deleted', 'success')
+    return redirect(url_for('election', link=link))
+
+
+@app.route("/elections/<link>/positions/<position_id>/candidates/new", methods=['GET', 'POST'])
+def new_candidate(link, position_id):
+    # TODO: add a guard to prevent unauthorized access!
+
+    position = Position.query.get(position_id)
+
+    if position is None:
+        flash(f'There is no such position', 'danger')
+        return redirect(url_for('missing_route'))
+
+    form = CandidateForm()
+    if form.validate_on_submit():
+        candidate = Candidate(name=form.name.data,
+                              bio=form.bio.data, position_id=position.id)
+        try:
+            db.session.add(candidate)
+            db.session.commit()
+        except:
+            db.session.rollback()
+        flash(f'Candidate added to position', 'success')
+        return redirect(url_for('election', link=link))
+
+    return render_template('candidates/form.html', title=f'New Candidate for {position.title}', form=form)
+
+
+@app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>", methods=['GET', 'POST'])
+def candidate(link, position_id, candidate_id):
+
+    position = Position.query.get(position_id)
+
+    if position is None:
+        flash(f'There is no such position', 'danger')
+        return redirect(url_for('missing_route'))
+
+    # TODO: check if you can query the Candidate from Position directly
+    candidate = Candidate.query.filter_by(
+        position=position, id=candidate_id).first()
+
+    if candidate is None:
+        flash(f'There is no such candidate', 'danger')
+        return redirect(url_for('missing_route'))
+
+    return render_template('candidates/index.html', title=f"{candidate.name} | {position.title} in {position.election.name}", candidate=candidate, position=position)
+
+
+@app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>/update", methods=['GET', 'POST'])
+def update_candidate(link, position_id, candidate_id):
+    # TODO: add a guard to prevent unauthorized access!
+
+    candidate = Candidate.query.get(candidate_id)
+
+    if candidate is None:
+        flash(f'There is no such candidate', 'danger')
+        return redirect(url_for('missing_route'))
+
+    form = CandidateForm()
+    if form.validate_on_submit() and request.method == 'POST':
+        candidate.name = form.name.data
+        candidate.bio = form.bio.data
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+        flash(f'Candidate updated successfully!', 'success')
+        return redirect(url_for('election', link=link))
+    elif request.method == 'GET':
+
+        form.name.data = candidate.name
+        form.bio.data = candidate.bio
+        return render_template('candidates/form.html', title=f'Update Candidate {candidate.name}', form=form)
+
+
+@app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>/delete", methods=['GET'])
+def delete_candidate(link, position_id, candidate_id):
+    candidate = Candidate.query.get_or_404(candidate_id)
+    election = Election.query.filter_by(link=link).first()
+    if election is None:
+        flash(f'There is no such election', 'danger')
+        return redirect(url_for('missing_route'))
+    if election.owner.id != current_user.id:
+        flash(f'Your not the owner of the election', 'danger')
+        return redirect(url_for('index'))
+
+    db.session.delete(candidate)
+    db.session.commit()
+    flash(f'Candidate has been deleted', 'success')
+    return redirect(url_for('election', link=link))
+
+# DEPRECATED
+
+
+@app.route("/elections/<link>/remove-candidate", methods=['GET', 'POST'])
 @login_required
-def delete_candidate(link):
+def delete_candidate_http(link):
 
     election = Election.query.filter_by(link=link).first_or_404()
 
@@ -274,7 +404,7 @@ def delete_candidate(link):
     return redirect(url_for('missing_route'))
 
 
-@app.route("/election/<link>/vote/pass", methods=['GET', 'POST'])
+@app.route("/elections/<link>/vote/pass", methods=['GET', 'POST'])
 @login_required
 def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
@@ -306,7 +436,7 @@ def voting_pass_link(link):
     return render_template('voting_pass_link.html', form=form)
 
 
-@app.route("/election/<link>/vote/cast", methods=['GET', 'POST'])
+@app.route("/elections/<link>/vote/cast", methods=['GET', 'POST'])
 @login_required
 def election_vote(link):
     election = Election.query.filter_by(link=link).first()
@@ -347,28 +477,25 @@ def election_vote(link):
         res = make_response(redirect(url_for('vote_success')))
         res.set_cookie('evoting-user-can-vote', '', expires=0)
         return res
-    return render_template('election_vote.html', title="Vote", form=form, candidates=candidates)
+    return render_template('elections/vote.html', title="Vote", form=form, candidates=candidates)
 
 
-@app.route("/election/<link>/vote/result", methods=['GET'])
+@app.route("/elections/<link>/vote/result", methods=['GET'])
 def result(link):
-    election = Election.query.filter_by(link=link).first()
     return redirect(url_for('election', link=link) + '#results')
-    # if election.status.name != "ended":
-    #     flash(f'The election hasnt ended yet chill bro.................or sis', 'danger')
-    #     return redirect(url_for('missing_route'))
-    # return render_template('result.html', title='Result', election=election)
 
 
-@app.route("/election/<link>/max-voters", methods=['GET'])
+@app.route("/elections/<link>/max-voters", methods=['GET'])
 def vote_limit(link):
     election = Election.query.filter_by(link=link).first()
     return render_template('vote_limit_message.html', election=election)
 
 
-@app.route("/election/success", methods=['GET'])
+@app.route("/elections/success", methods=['GET'])
 def vote_success():
     return render_template('vote_success_message.html')
+
+# NOT USED
 
 
 @app.route("/statuses")
@@ -385,6 +512,7 @@ def logout_complete():
     return render_template("logout_complete.html", title="Logout Complete Page")
 
 
+# DEPRECATED
 @app.route("/add-candidate", methods=["GET", "POST"])
 def add_candidate():
 
@@ -411,6 +539,7 @@ def add_candidate():
     return render_template("partials/candidate_input.html", c=new_field)
 
 
+# DEPRECATED
 @app.route("/remove-candidate", methods=["GET", "POST"])
 def remove_candidate():
 

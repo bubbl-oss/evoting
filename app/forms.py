@@ -7,9 +7,9 @@ from app.models import Status
 
 
 class CandidateForm(FlaskForm):
-    id = StringField('Id')
     name = StringField('Name')
     bio = TextAreaField('Bio')
+    submit = SubmitField('Submit')
 
 
 class ElectionForm(FlaskForm):
@@ -21,12 +21,18 @@ class ElectionForm(FlaskForm):
     # TODO: this is temporary. We will add the supplied time to the start date and just save it
     ending_at = DateTimeLocalField(
         'Duration of Election', format='%Y-%m-%dT%H:%M')
-    candidates = FieldList(FormField(CandidateForm),
-                           min_entries=2, max_entries=10)
+    # candidates = FieldList(FormField(CandidateForm),
+    #                        min_entries=2, max_entries=10)
     number_of_voters = IntegerField(
         'Number of Voters', validators=[DataRequired()])
     password = StringField('Password')
-    submit = SubmitField('Generate Link')
+    submit = SubmitField('Submit')
+
+
+class PositionForm(FlaskForm):
+    title = StringField('Title', validators=[DataRequired()])
+    description = TextAreaField('Position Description')
+    submit = SubmitField('Submit')
 
 
 class VotePasswordForm(FlaskForm):
