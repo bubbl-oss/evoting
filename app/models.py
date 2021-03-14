@@ -36,6 +36,7 @@ class User(UserMixin, db.Model):
 
     def get_name(self):
         """Splits 'firstname.lastname@aun.edu.ng' into a list ['firstname', 'lastname']
+        if it's only one name, the list only contains one element ['firstname']
         """
         name = self.email[:self.email.find('@')]
 

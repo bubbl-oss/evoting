@@ -68,6 +68,10 @@
                     <h3>{{ p.title }}</h3>
                 </a>
             </td>
+            <td>
+                <a href="{{ url_for('new_candidate', link=election.link, position_id=p.id) }}"><button>Add
+                        Candidate</button>
+            </td>
         </tr>
         <tr>
             <th>
