@@ -25,11 +25,8 @@ def to_json_array(collection):
 
 @app.route("/")
 def index():
-    # get all elections that have this status. pending
-    status = Status.query.get(1)
-    elections = Election.query.with_parent(
-        status).all()  # all elections in the system
-    return render_template("index.html", title="Home Page", elections=elections)
+
+    return render_template("index.html", title="Home Page")
 
 
 @app.route("/login-complete")
@@ -58,11 +55,15 @@ def login_complete():
     return redirect(url_for('dashboard'))
 
 
-@app.route("/dashboard")
+@app.route("/home")
 @login_required
 def dashboard():
-    elections = current_user.elections.all()  # all user elections
-    return render_template("dashboard.html", title="User Dashboard", elections=elections)
+    # get all elections that have this status. pending
+    status = Status.query.get(1)
+    elections = Election.query.with_parent(
+        status).all()  # all elections in the system
+    user_elections = current_user.elections.all()  # all user elections
+    return render_template("dashboard.html", title="User Home", elections=elections, user_elections=user_elections)
 
 
 @app.route("/elections/new", methods=['GET', 'POST'])
