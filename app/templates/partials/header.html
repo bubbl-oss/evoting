@@ -1,0 +1,38 @@
+<header>
+    <div class="container">
+        {% if current_user.is_authenticated %}
+
+        <div class="d-flex justify-content-between pt-5">
+            <h1 id="name_tag">
+                Hi, {{ current_user.get_name()[0].capitalize() }}
+            </h1>
+
+            <div>
+                {% if current_user.is_anonymous %}
+                <div>
+                    <button class="btn btn-outline-danger btn-sm" onclick="login()">Login</button>
+                </div>
+                {% else %}
+                <div>
+                    <button class="btn btn-outline-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link ps-0 text-white" aria-current="page" href="{{ url_for('index') }}">Home</a>
+            </li>
+            {% if current_user.is_authenticated %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{{ url_for('dashboard') }}">Dashboard</a>
+            </li>
+            {% endif %}
+        </ul>
+        <!-- nav -->
+    </div>
+
+    <hr class="my-1">
+</header>

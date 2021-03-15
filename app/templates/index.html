@@ -1,31 +1,22 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<div>
-    <h4>This is the home page!</h4>
+<div class="container text-center py-4">
+    <h2>EVoting</h2>
 
-    {% if current_user.is_authenticated and elections %}
-    <h3>Upcoming elections</h3>
+    <p>
+        Yarnnsss
+    </p>
 
-    <table style="border: 1px solid gold">
-        <thead>
-            <th>
-                Id
-            </th>
-            <th>
-                Name
-            </th>
-            <th>
-                Status
-            </th>
-            <th>
-                Action
-            </th>
-        </thead>
-        {% for election in elections %}
-        {% include "partials/election_record.html" %}
-        {% endfor %}
-    </table>
-    {% endif %}
+    <div class="d-flex align-items-center">
+        {% if current_user.is_authenticated %}
+        <a class=" mx-auto" href="{{ url_for('dashboard') }}">
+            <button class="btn btn-info">Go to Dashboard</button>
+        </a>
+        {% else %}
+        <button class="btn btn-info mx-auto" onclick="login()">Login</button>
+        {% endif %}
+
+    </div>
 </div>
 {% endblock %}

@@ -1,18 +1,29 @@
 <tr>
     <td>
-        {{ election.id }}
+        <a class="link" href="{{ url_for('election', link=election.link)  }}">
+            {{ election.name }}
+        </a>
     </td>
-    <td>{{ election.name }}</td>
-    <td>{{ election.status.name }}</td>
+    <td>
+        <span class="badge rounded-pill bg-info">
+            {{ election.status.name }}
+        </span>
+    </td>
     <td>
         {%if election.owner.id == current_user.id %}
-        <a href="{{ url_for('update_election', link=election.link)  }}">Edit</a>
+        <a href="{{ url_for('update_election', link=election.link)  }}">
+            <span class="badge bg-secondary">
+                edit
+            </span>
+        </a>
         {% endif %}
 
-        <a href="{{ url_for('election', link=election.link) }}">View</a>
-
         {% if election.status.name == 'started' %}
-        <a href="{{ url_for('voting_pass_link', link=election.link) }}">Vote</a>
+        <a href="{{ url_for('voting_pass_link', link=election.link) }}">
+            <button class="btn btn-primary shadow-sm">
+                Vote!
+            </button>
+        </a>
         {% endif %}
     </td>
 </tr>
