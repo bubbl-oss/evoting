@@ -23,6 +23,7 @@
             integrity="sha384-t37OW0DbqgL50XZW+Tl8TLchxsPoxIJ7NQ/l4aSZIXZVJQAhyQvvkWZgL/SiY/jD"
             crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/min/moment.min.js"></script>
 </head>
 
 <body class="{{ styles }}">
@@ -45,6 +46,11 @@
     <div class="container">
         {% block content %}{% endblock %}
     </div>
+
+    <footer class="footer text-center mt-3 px-3 py-4 text-black-40 bg-light">
+        e-voting by the Bubbl team at AUN
+    </footer>
+
 
     <script src="https://auther.mybubbl.me/js/auth.js?v=0.2.0"></script>
     <script>
@@ -81,7 +87,9 @@
         };
     </script>
 
+   
     {% if request.endpoint == 'new_election' %}
+    <script src="{{ url_for('static', filename='js/election.js') }}" ></script>
     <script>
         window.onload = function () { console.log('Create Elecion page loaded!') };
         /** let last_candidate_index = 1;
