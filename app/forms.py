@@ -41,5 +41,5 @@ class VotePasswordForm(FlaskForm):
 
 
 class VotingForm(FlaskForm):
-    candidates = RadioField('Candidates', choices=[], coerce=str)
+    candidates = RadioField('Candidates', coerce=str)
     submit = SubmitField('Vote')
