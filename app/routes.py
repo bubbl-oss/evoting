@@ -110,12 +110,15 @@ def new_election():
 @app.route("/elections/<link>", methods=['GET', 'POST'])
 def election(link):
     election = Election.query.filter_by(link=link).first()
+
+    position = Position.query.filter_by(election=election).first()
+
     if election is None:
         flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
 
     statuses = Status.query.all()
-    return render_template('elections/index.html', title=election.name, election=election, statuses=statuses)
+    return render_template('elections/index.html', title=election.name, election=election, statuses=statuses, position=position)
 
 
 @app.route("/elections/<link>/update", methods=['GET', 'POST'])
@@ -158,6 +161,7 @@ def update_election(link):
 @app.route("/elections/<link>/delete")
 def delete_election(link):
     election = Election.query.filter_by(link=link).first()
+
     if election is None:
         flash(f'There is no such election', 'danger')
         return redirect(url_for('missing_route'))
@@ -165,10 +169,25 @@ def delete_election(link):
         flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
+    election_positions = election.positions.all()
+
+    for p in election_positions:
+        db.session.delete(p)
+
+    for p in election_positions:
+        if p.candidates is not None:
+            for c in p.candidates:
+                db.session.delete(c)
+
+    for p in election_positions:
+        if p.votes is not None:
+            for v in p.votes:
+                db.session.delete(v)
+
     db.session.delete(election)
     db.session.commit()
     flash(f'Election and candidates have been deleted', 'success')
-    return 'Election deleted successfully!'
+    return redirect(url_for('index'))
 
 
 @app.route("/elections/<link>/change-status", methods=['POST'])
@@ -277,6 +296,18 @@ def delete_position(link, position_id):
         flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
+    election_candidates = position.candidates.all()
+
+    if election_candidates is not None:
+        for c in election_candidates:
+            db.session.delete(c)
+
+    position_votes = position.votes.all()
+
+    if position_votes is not None:
+        for p_votes in position_votes:
+            db.session.delete(p_votes)
+
     db.session.delete(position)
     db.session.commit()
     flash(f'Position has been deleted', 'success')
@@ -366,6 +397,12 @@ def delete_candidate(link, position_id, candidate_id):
         flash(f'Your not the owner of the election', 'danger')
         return redirect(url_for('index'))
 
+    candidate_votes = candidate.votes.all()
+
+    if candidate_votes is not None:
+        for c_votes in candidate_votes:
+            db.session.delete(c_votes)
+
     db.session.delete(candidate)
     db.session.commit()
     flash(f'Candidate has been deleted', 'success')
@@ -421,10 +458,7 @@ def voting_pass_link(link):
     form = VotePasswordForm()
     if form.validate_on_submit():
         if election.password is not None:
-            if form.password.data != election.password:
-                flash(f'Incorrect password', 'danger')
-                return redirect(url_for('voting_pass_link', link=link))
-            else:
+            if form.password.data == election.password:
                 flash(f'Happy voting', 'success')
                 # add voting cookie with value of election id and expiration at the election
                 # ending time...
@@ -434,6 +468,9 @@ def voting_pass_link(link):
                                str(election.id), expires=int(datetime.timestamp(election.ending_at)))
 
                 return res
+            else:
+                flash(f'Incorrect password', 'danger')
+                return redirect(url_for('voting_pass_link', link=link))
     return render_template('voting_pass_link.html', form=form)
 
 
@@ -451,34 +488,40 @@ def election_vote(link):
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
     if election.status.name != "started":
         return redirect(url_for('missing_route'))
-    candidates = election.candidates
+
+    positions = Position.query.filter_by(election=election).all()
 
     form = VotingForm()
-    form.candidates.choices = [(candidate.id, candidate.name)
-                               for candidate in candidates]
-    if form.validate_on_submit():
-        user_vote = Vote.query.\
-            filter_by(election=election, user=current_user).first()
-        if user_vote is not None:
-            db.session.delete(user_vote)
-            db.session.commit()
 
-        # check if the total election votes is more than or equal to the number of voters; if yes redirect to vote_limit message
-        if election.votes.count() >= int(election.number_of_voters):
-            return redirect(url_for('vote_limit', link=link))
+    if request.method == 'POST':
+        for position in positions:
+            user_vote = Vote.query.\
+                filter_by(position=position, user=current_user).first()
+            if user_vote is not None:
+                db.session.delete(user_vote)
+                db.session.commit()
 
-        voted = request.form['candidates']
-        voted_candidate = Candidate.query.filter_by(id=voted).first()
-        vote = Vote(user=current_user, election=election,
-                    candidate=voted_candidate)
-        db.session.add(vote)
+        # check if the total election votes is more than or equal to the number of voters; 
+        # if yes redirect to vote_limit message
+        for p in election.positions.all():
+            if p.votes.count() >= int(election.number_of_voters):
+                return redirect(url_for('vote_limit', link=link))
+
+        for position in positions:
+            voted = request.form[str(position.title)]
+            voted_candidate = Candidate.query.filter_by(id=voted).first()
+            vote = Vote(user=current_user, position=position,
+                        candidate=voted_candidate)
+        
+            print(vote)
+            db.session.add(vote)
         db.session.commit()
         flash(f'You have successfully voted; may the odds forever be in your favour', 'success')
         # delete cookie for this election...
         res = make_response(redirect(url_for('vote_success')))
         res.set_cookie('evoting-user-can-vote', '', expires=0)
         return res
-    return render_template('elections/vote.html', title="Vote", form=form, candidates=candidates)
+    return render_template('elections/election_vote.html', title="Vote", form=form, positions=positions, election=election)
 
 
 @app.route("/elections/<link>/vote/result", methods=['GET'])

@@ -100,7 +100,7 @@ class Position(db.Model):
                               passive_deletes=True, cascade="all, delete")
 
     def __repr__(self):
-        return f'<Postition {self.name} {self.election}>'
+        return f'<Position {self.title} {self.election}>'
 
     def as_dict(self):
         return {item.name: getattr(self, item.name) for item in self.__table__.columns}
