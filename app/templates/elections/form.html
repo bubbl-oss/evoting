@@ -2,14 +2,14 @@
 
 {% block content %}
 
-<div class="container">
+<!-- <div class="container">
     <ul class="progressbar">
         <li class="active">login</li>
         <li>choose interest</li>
         <li>add friends</li>
         <li>View map</li>
     </ul>
-</div>
+</div> -->
 
 <div class="my-3">
     <h4> {{ 'New' if request.endpoint == 'new_election' else 'Update' }} Election</h4>
@@ -66,9 +66,9 @@
                         <option value="w">Weeks</option>
                     </select>
                 </div>
-                <div class="col-md-4 col-12 mt-2">
-                    <span id="datetime_input_block" style="display: none;">
-                        Time <input type="time" id="datetime_input" class="form-control">
+                <div class="col-md-4 col-12 mt-md-0 mt-2">
+                    <span id="datetime_input_block" class="align-items-baseline" style="display: none;">
+                        <span>Time</span> <input type="time" id="datetime_input" class="form-control">
                     </span>
 
                 </div>

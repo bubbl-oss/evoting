@@ -6,13 +6,6 @@
     <h5 class="text-success italic"> {{ position.election.name }} </h5>
 </div>
 
-{{ request.args.get('first_position') }}
-
-{% if request.args.get('first_position') is not None %}
-<div class="alert alert-success">
-    Now create your first position for candidates. For example, 'Class Captain'
-</div>
-{% endif %}
 
 <!-- form block -->
 <main class="row">
