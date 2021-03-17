@@ -1,21 +1,25 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<form action="" method="post" >
+<form action="{{ url_for('election_vote', link=election.link) }}" method="POST" >
     {{ form.hidden_tag() }}
-    <h4>Candidates</h4>
-    {% for candidate in candidates %}
-    <p>
-    <input type="radio" name="candidates" value="{{ candidate.id }}"> {{ candidate.name }} <br>
-    </p>
-    {% endfor %}
-    <p>{{ form.submit() }}</p>
+    {% for position in positions %}
+        <h4>{{ position.title }}</h4>
+        {% for candidate in position.candidates %}
+            <p>
+            <input type="radio" name="{{ position.title }}" value="{{ candidate.id }}"> {{ candidate.name }} <br>
+            </p>    
+        {% endfor %}
 
-    {% for field, errors in form.errors.items() %}
-    <div class="alert alert-error">
-        {{ form[field].label }}: {{ ', '.join(errors) }}
-    </div>
+        <!-- {{ form.candidates }} -->
+
+        {% for field, errors in form.errors.items() %}
+        <div class="alert alert-error">
+            {{ form[field].label }}: {{ ', '.join(errors) }}
+        </div>
+        {% endfor %}
     {% endfor %}
-    
+    <!-- <p>{{ form.submit() }}</p> -->
+    <br><input type="submit" value="Vote" />
 </form>
 {% endblock %}

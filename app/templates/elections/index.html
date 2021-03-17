@@ -69,8 +69,7 @@
                 </a>
             </td>
             <td>
-                <a href="{{ url_for('new_candidate', link=election.link, position_id=p.id) }}"><button>Add
-                        Candidate</button>
+                <a href="{{ url_for('new_candidate', link=election.link, position_id=p.id) }}">
             </td>
         </tr>
         <tr>
@@ -91,7 +90,7 @@
                     <h4> {{ c.name }} </h4>
                 </a>
             </td>
-            <td>{{ c.votes.count() }}</td>
+            <td style="text-align: center;">{{ c.votes.count() }}</td>
             <td> Yeet</td>
 
         </tr>
@@ -106,13 +105,13 @@
                 data-clipboard-text="{{ url_for('election', link=election.link, _external=True) }}#results"
                 onclick="copy('copy-election-results-link')">Share</button></button> </h3>
     <section id="results" style="height: 300px; width: 100%;background-color: lightblue;">
-        {% if election.results.count() > 0 %}
+        {% if position.results.count() > 0 %}
         Results will render here
-        <h5>Last Updated: {{ election.results[0].modified_at.strftime('%D - %T %p') }} </h5>
+        <h5>Last Updated: {{ position.results[0].modified_at.strftime('%D - %T %p') }} </h5>
         <table style="border-collapse: collapse;">
             <thead style="border: 1px solid darkblue">
                 <th style="border: 1px solid darkblue">
-                    Candidate
+                    Candidates
                 </th>
                 <th style="border: 1px solid darkblue">
                     Total Votes
@@ -120,15 +119,20 @@
             </thead>
 
             <tbody style="border: 1px solid darkblue">
-                {% for r in election.results %}
-                <tr style="border: 1px solid darkblue">
-                    <td style="border: 1px solid darkblue">
-                        {{ r.candidate.name }}
-                    </td>
-                    <td style="border: 1px solid darkblue">
-                        {{ r.total_votes }}
-                    </td>
+                {% for p in election.positions %}
+                <tr style="border: 1px solid darkblue; text-align: center;">
+                    <td colspan="2">{{p.title}}</td>
                 </tr>
+                    {% for r in p.results %}
+                    <tr style="border: 1px solid darkblue">
+                        <td style="border: 1px solid darkblue">
+                            {{ r.candidate.name }}
+                        </td>
+                        <td style="border: 1px solid darkblue">
+                            {{ r.total_votes }}
+                        </td>
+                    </tr>
+                    {% endfor %}
                 {% endfor %}
             </tbody>
 

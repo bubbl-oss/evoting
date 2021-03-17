@@ -1,7 +1,6 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<h1> {{ 'New' if request.endpoint == 'new_election' else 'Update' }} Election</h1>
 
 <form method="post">
     {{ form.hidden_tag() }}
@@ -43,19 +42,110 @@
         {% endfor %}
     </p>
     <hr>
+<!-- <div class="container">
+    <ul class="progressbar">
+        <li class="active">login</li>
+        <li>choose interest</li>
+        <li>add friends</li>
+        <li>View map</li>
+    </ul>
+</div> -->
 
-    </section>
+<div class="my-3">
+    <h4> {{ 'New' if request.endpoint == 'new_election' else 'Update' }} Election</h4>
+</div>
 
-    <p>
-        {{ form.password.label }}<br>
-        {{ form.password(size=10, type='password') }}<br>
-        {% for error in form.password.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-    <p>{{ form.submit(value='Submit') }}</p>
+<!-- form block -->
+<main class="row">
+    <div class="col-md-6">
+        <form method="post">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.name.label(class='form-label') }}
+                {{ form.name(size=48, class='form-control') }}
+                {% for error in form.name.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.description.label(class='form-label') }}
+                {{ form.description(size=140, class='form-control') }}
+                {% for error in form.description.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                <label class="form-label" for="starting_at">Starting at</label>
+                {{ form.starting_at(class='select_starttime form-control') }}
+                {% for error in form.starting_at.errors %}
+                <span style="color: red;display: block">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p style="display: {{ 'none' if request.endpoint == 'new_election' else 'initial' }}">
+                <label class="form-label" for="ending_at">Ending at</label>
+                {{ form.ending_at(class='select_endtime form-control') }}
+                {% for error in form.ending_at.errors %}
+                <span style="color: red;display: block">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+
+            {% if request.endpoint == 'new_election' %}
+            <p id="datetime_picker">
+                <!-- test time select -->
+                <label class="form-label">Ending at</label>
+            <div class="row">
+                <div class="col-md-3 col-6">
+                    <input class="form-control" type="number" name="times" id="times_input" min="15" max="45" step="15">
+                </div>
+                <div class="col-md-3 col-6">
+                    <select class="form-select" id="unit_select">
+
+                        <option selected value="m">Mins</option>
+                        <option value="h">Hours</option>
+                        <option value="d">Days</option>
+                        <option value="w">Weeks</option>
+                    </select>
+                </div>
+                <div class="col-md-4 col-12 mt-md-0 mt-2">
+                    <span id="datetime_input_block" class="align-items-baseline" style="display: none;">
+                        <span>Time</span> <input type="time" id="datetime_input" class="form-control">
+                    </span>
+
+                </div>
+                <div class="col-12 mt-2">
+                    <b class="form-label text-success" id="ending_at_display"></b>
+                </div>
+            </div>
+
+            </p>
+            {% endif %}
+
+            <!-- Render the status field if this is an update... -->
+            <p>
+                {{ form.number_of_voters.label(class='form-label') }}
+                {{ form.number_of_voters(class='form-control', type='number') }}
+                {% for error in form.number_of_voters.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+
+            <p>
+                {{ form.password.label(class='form-label') }}
+                {{ form.password(size=10, type='password', class='form-control') }}
+                {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                <button type="submit" class="btn btn-primary">
+                    {{ 'Create' if request.endpoint == 'new_election' else 'Update' }}
+                </button>
+            </p>
 
 
+        </form>
+    </div>
+</main>
+<!-- form block -->
 
-</form>
 {% endblock %}

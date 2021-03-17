@@ -1,28 +1,48 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<h1> {{ 'New' if request.endpoint == 'new_candidate' else 'Update' }} Candidate</h1>
+<div class="my-3">
+    <h4> {{ 'New' if request.endpoint == 'new_candidate' else 'Update' }} Candidate</h4>
+    <h5 class="text-success italic"> {{ 'Add a ' if request.endpoint == 'new_candidate' else 'Update this ' }} <u>{{
+            candidate.position.title }}</u> Candidate</h5>
+</div>
 
-<form method="post">
-    {{ form.hidden_tag() }}
-    <p>
-        {{ form.name.label }}<br>
-        {{ form.name(size=48) }}<br>
-        {% for error in form.name.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-    <p>
-        {{ form.bio.label }}<br>
-        {{ form.bio(size=140) }}<br>
-        {% for error in form.bio.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
+{% if request.args.get('first_candidate') %}
+<div class="alert alert-success">
+    Now add a Candidate to your new Position
+</div>
+{% endif %}
 
-    <hr>
+<!-- form block -->
+<main class="row">
+    <div class="col-md-6">
+        <form method="post">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.name.label(class='form-label') }}
+                {{ form.name(size=48, class='form-control') }}
+                {% for error in form.name.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>
+                {{ form.bio.label(class='form-label') }}
+                {{ form.bio(size=140, class='form-control') }}
+                {% for error in form.bio.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
 
-    <p>{{ form.submit(value='Submit') }}</p>
-
-</form>
+            <p>
+                <button type="submit" class="btn btn-primary">
+                    {{ 'Create' if request.endpoint == 'new_candidate' else 'Update' }}
+                </button>
+                <!-- Todo: Add this later! -->
+                <!-- <button type="button" class="btn btn-secondary" onclick="window.location.back()">
+                    Cancel
+                </button> -->
+            </p>
+        </form>
+    </div>
+</main>
 {% endblock %}
