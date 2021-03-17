@@ -1,0 +1,44 @@
+{% extends "layouts/results.html" %}
+
+{% block content %}
+
+<div class="text-center bg-white p-3 card shadow-sm border-info my-5">
+    <h4>
+        Results from {{ election.name }}
+    </h4>
+    <p>
+        Last Updated: {{ election.positions[0].results[0].modified_at.strftime('%D - %T %p') }}
+    </p>
+    <div class="row">
+        <div class="col-12 col-md-6 offset-md-3">
+            {% for p in election.positions %}
+            <h4> {{ p.title }} </h4>
+            {% if result_tally[p.id | string]['votes']|length != 0 %}
+            <ul>
+                {% for r in p.results %}
+                <li>
+                    {{ r.candidate.name }} got <em> {{ r.total_votes }} votes </em>
+                    {% if r.candidate.id == result_tally[p.id | string]['max'][0] %}
+                    <b>WINNER</b>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div>
+                No votes were cast :(
+            </div>
+
+            {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+</div>
+
+<p class="text-center mt-2">
+    <a href="{{ url_for('dashboard') }}">Back home</a>
+</p>
+
+{% endblock %}

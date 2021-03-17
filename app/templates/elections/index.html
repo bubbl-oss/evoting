@@ -28,7 +28,7 @@
     </div>
 
     <!-- TODO: copy link will be share link later -->
-    {% if election.owner.id == current_user.id %}
+    {% if election.owner.id == current_user.id and election.status.name == 'pending' %}
     <a class="btn btn-info" href="{{ url_for('update_election', link=election.link) }}">
         edit
     </a>
@@ -71,8 +71,8 @@
 
     {% if election.status.name == 'started' %}
     <a class="btn btn-success d-block btn-lg my-3"
-           href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Vote</a>
-   
+       href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Vote</a>
+
     {% endif %}
 
     <div class="d-flex justify-content-between my-3">
@@ -83,13 +83,24 @@
         <div class="float-right float-end">
 
             {% if election.status.name == 'ended' %}
+
+            <a href="{{ url_for('election_result', link=election.link) }}"> <button class="btn btn-primary">See full
+                    result!</button> </a>
+
             <button class="btn btn-success" id="copy-election-results-link"
                     data-clipboard-text="{{ url_for('election', link=election.link, _external=True) }}#results"
                     onclick="copy('copy-election-results-link')">Share</button>
             {% endif %}
 
+
+            <!-- user should can only add new Positions when the election has not started yet. -->
+            <!-- If the user wants to add a Candidate or position after the election has started they
+            should change the status from 'started' to 'pending' -->
+            <!-- TODO: there should be a check also on the backend for this -->
+            {% if election.status.name == 'pending' %}
             <a href="{{ url_for('new_position', link=election.link) }}"><button class="btn btn-info">Add Position +
                 </button> </a>
+            {% endif %}
         </div>
     </div>
 
@@ -109,9 +120,6 @@
                     <a class="h3 link-light" href="{{ url_for('position', link=election.link,position_id=p.id) }}">
                         {{ p.title }}
                     </a>
-                </td>
-                <td>
-                    <a href="{{ url_for('new_candidate', link=election.link, position_id=p.id) }}">
                 </td>
             </tr>
             <tr>

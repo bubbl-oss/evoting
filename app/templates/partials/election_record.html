@@ -10,7 +10,8 @@
         </span>
     </td>
     <td>
-        {%if election.owner.id == current_user.id %}
+
+        {%if election.owner.id == current_user.id and election.status.name == 'pending' %}
         <a href="{{ url_for('update_election', link=election.link)  }}">
             <button class="btn btn-info btn-sm">
                 edit

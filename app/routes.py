@@ -1,3 +1,4 @@
+from operator import itemgetter
 from flask.helpers import make_response
 from datetime import datetime
 
@@ -64,9 +65,10 @@ def dashboard():
     # get all elections that have this status. pending or status Started
 
     # all elections in the system
-    elections = Election.query.filter(
-        or_(Election.status_id == eStatus.PENDING.value, Election.status_id == eStatus.STARTED.value)).all()
+    elections = Election.query.filter_by(status_id=eStatus.PENDING.value).all()
     user_elections = current_user.elections.all()  # all user elections
+    type(user_elections)
+    type(elections)
     return render_template("dashboard.html", title="User Home", elections=elections, user_elections=user_elections)
 
 
@@ -217,6 +219,28 @@ def change_election_status(link):
 
     flash(f'Election status has been changed to {status.name}', 'success')
     return redirect(url_for('election', link=election.link))
+
+
+@app.route("/elections/<link>/results", methods=['GET', 'POST'])
+def election_result(link):
+    election = Election.query.filter_by(link=link).first()
+
+    if election is None or election.status_id != eStatus.ENDED.value:
+        flash(f'Not yet finished or does not exist!', 'danger')
+        return redirect(url_for('missing_route'))
+
+    result_tally = {}
+
+    for p in election.positions:
+        p_data = {"votes": [(r.candidate.id, r.total_votes)
+                            for r in p.results]}
+        p_data["max"] = None if len(p_data["votes"]) == 0 else max(
+            p_data["votes"], key=itemgetter(1))
+        result_tally[f"{p.id}"] = p_data
+
+    # done! Thank you Jesus now, find the max for each position :)
+
+    return render_template('elections/results.html', title=election.name, election=election, result_tally=result_tally)
 
 
 @app.route("/elections/<link>/positions/new", methods=['GET', 'POST'])

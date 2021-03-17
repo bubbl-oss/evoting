@@ -4,7 +4,7 @@
 <div>
     <div class="d-flex justify-content-between mt-3">
         <div>
-            You have {{ user_elections.count('') }} elections
+            You have {{ user_elections|length }} elections
         </div>
 
         <div>
@@ -13,7 +13,7 @@
     </div>
 
     <h4>Your elections</h4>
-    {% if user_elections %}
+    {% if user_elections|length > 0 %}
     <table class="table table-striped table-hover" style="border: 2px solid lightblue;background-color: khaki;">
         <thead>
             <th>
@@ -32,6 +32,7 @@
     </table>
     {% endif %}
 
+    {% if elections|length > 0 %}
     <h4>Upcoming elections</h4>
 
     <table class="table table-striped table-hover" style="border: 1px solid gold">
@@ -51,5 +52,6 @@
         {% include "partials/election_record.html" %}
         {% endfor %}
     </table>
+    {% endif %}
 </div>
 {% endblock %}

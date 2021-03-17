@@ -13,10 +13,13 @@
     {{ position.description }}
 </p>
 
+<!-- No such changes should be able to be made while the election has started -->
+{% if position.election.owner.id == current_user.id and position.election.status.name == 'pending' %}
 <a href="{{ url_for('update_position', link=election.link,position_id=position.id) }}"><button
             class="btn btn-info btn-sm">Edit</button></a>
 <a href="{{ url_for('delete_position', link=election.link,position_id=position.id) }}"><button
             class="btn btn-info btn-sm">Delete</button></a>
+{% endif %}
 <hr>
 
 
@@ -27,9 +30,14 @@
     <h4>Candidates</h4>
 
     <div class="float-right float-end">
+        <!-- Only add candidates when the election has not started yet... -->
+        <!-- We could prevent changes of any kind to happen sha for Election, Position and Candidate when the
+        election has started... -->
+        {% if position.election.status.name == 'pending' %}
         <a href="{{ url_for('new_candidate', link=election.link, position_id=position.id) }}"><button
                     class="btn btn-info">Add Candidate +
             </button> </a>
+        {% endif %}
     </div>
 </div>
 
@@ -41,7 +49,9 @@
         <th>
             Bio
         </th>
+        {% if position.election.owner.id == current_user.id and position.election.status.name == 'pending' %}
         <th>Actions</th>
+        {% endif %}
     </thead>
     {% for c in position.candidates %}
     <tr>
@@ -52,12 +62,14 @@
             </a>
         </td>
         <td>{{ c.bio }}</td>
+        {% if position.election.owner.id == current_user.id and position.election.status.name == 'pending' %}
         <td>
             <a href="{{ url_for('update_candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button
                         class="btn btn-secondary">Edit</button></a>
             <a href="{{ url_for('delete_candidate', link=election.link,position_id=position.id,candidate_id=c.id) }}"><button
                         class="btn btn-danger">Delete</button></a>
         </td>
+        {% endif %}
     </tr>
     {% endfor %}
 </table>
