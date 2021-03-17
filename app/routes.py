@@ -1,13 +1,9 @@
 from flask.helpers import make_response
-from app.tools import calculate_election_result
-from datetime import datetime, time
+from datetime import datetime
 
 from app import app, db, scheduler
-import json
 import uuid
-import string
-import random
-from flask import render_template, request, url_for, redirect, abort, jsonify, flash
+from flask import render_template, request, url_for, redirect, jsonify, flash
 from sqlalchemy import func
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Position, Type, User, Election, Status, Candidate, Vote, Result
@@ -25,8 +21,12 @@ def to_json_array(collection):
 
 @app.route("/")
 def index():
-
     return render_template("index.html", title="Home Page")
+
+
+@app.route("/_health")
+def health():
+    return 'ok', 200
 
 
 @app.route("/login-complete")
@@ -103,7 +103,7 @@ def new_election():
                 print(str(e))
 
             flash(f'Election created succesfully', 'success')
-        return redirect(url_for('election', link=random_link))
+        return redirect(url_for('new_position', link=random_link) + '?first_position')
     return render_template("elections/form.html", title="New Election", form=form, count_candidates=2)
 
 
@@ -214,7 +214,7 @@ def new_position(link):
         except:
             db.session.rollback()
             flash(f'Error creating Position', 'success')
-        return redirect(url_for('election', link=link))
+        return redirect(url_for('new_candidate', link=link, position_id=position.id) + '?first_candidate')
 
     return render_template('positions/form.html', title=f'New {election.name} Position', form=form, election=election)
 
@@ -305,7 +305,7 @@ def new_candidate(link, position_id):
         flash(f'Candidate added to position', 'success')
         return redirect(url_for('election', link=link))
 
-    return render_template('candidates/form.html', title=f'New Candidate for {position.title}', form=form)
+    return render_template('candidates/form.html', title=f'New Candidate for {position.title}', form=form, position=position)
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>", methods=['GET', 'POST'])
@@ -352,7 +352,7 @@ def update_candidate(link, position_id, candidate_id):
 
         form.name.data = candidate.name
         form.bio.data = candidate.bio
-        return render_template('candidates/form.html', title=f'Update Candidate {candidate.name}', form=form)
+        return render_template('candidates/form.html', title=f'Update Candidate {candidate.name}', form=form, candidate=candidate)
 
 
 @app.route("/elections/<link>/positions/<position_id>/candidates/<candidate_id>/delete", methods=['GET'])
