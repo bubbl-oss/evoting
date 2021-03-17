@@ -25,18 +25,13 @@
         {% for error in form.starting_at.errors %}
         <span style="color: red;display: block">[{{ error }}]</span>
         {% endfor %}
-        {% for error in form.starting_at.errors %}
-        <span style="color: red;display: block;">[{{ error }}]</span>
-        {% endfor %}
+        <!-- you put the loop for errors twice -->
     </p>
     <p>
         Ending At<br>
         {{ form.ending_at(class='select_endtime') }}
         {% for error in form.ending_at.errors %}
         <span style="color: red;display: block">[{{ error }}]</span>
-        {% endfor %}
-        {% for error in form.ending_at.errors %}
-        <span style="color: red;display: block;">[{{ error }}]</span>
         {% endfor %}
     </p>
     <!-- Render the status field if this is an update... -->

@@ -94,11 +94,11 @@ def new_election():
             try:
                 # schedule them to run the schuled_job method at their starting datetime
                 # notice the change to the id as you requested
-                scheduler.add_job(id="start " + election.name, func=schedule_job,
+                scheduler.add_job(id="start " + election.id, func=schedule_job,
                                   trigger='date', run_date=election.starting_at, args=[election.id])
                 # schedule the jobs to run the schuled_job method at their ending datetime
                 # notice the change to the id as you requested
-                scheduler.add_job(id="end " + election.name, func=schedule_job,
+                scheduler.add_job(id="end " + election.id, func=schedule_job,
                                   trigger='date', run_date=election.ending_at, args=[election.id])
             except Exception as e:
                 print(str(e))
@@ -144,12 +144,12 @@ def update_election(link):
         # the scheduler
         try:
             # remove the previous scheduled event then recreate with form data
-            scheduler.remove_job(id="start " + election.name)
-            scheduler.add_job(id="start " + election.name, func=schedule_job,
+            scheduler.remove_job(id="start " + election.id)
+            scheduler.add_job(id="start " + election.id, func=schedule_job,
                                 trigger='date', run_date=form.starting_at.data, args=[election.id])
             # remove the previous scheduled event then recreate with form data
-            scheduler.remove_job(id="end " + election.name)
-            scheduler.add_job(id="end " + election.name, func=schedule_job,
+            scheduler.remove_job(id="end " + election.id)
+            scheduler.add_job(id="end " + election.id, func=schedule_job,
                                 trigger='date', run_date=form.ending_at.data, args=[election.id])
         except Exception as e:
             print(str(e))
@@ -182,7 +182,8 @@ def delete_election(link):
     db.session.delete(election)
     db.session.commit()
     flash(f'Election and candidates have been deleted', 'success')
-    return 'Election deleted successfully!'
+    # after deleting the user should be redirected to dashboard
+    return redirect(url_for('dashboard')) 
 
 
 @app.route("/elections/<link>/change-status", methods=['POST'])
