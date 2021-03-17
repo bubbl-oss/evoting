@@ -12,6 +12,7 @@ from sqlalchemy import func
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Position, Type, User, Election, Status, Candidate, Vote, Result
 from app.forms import CandidateForm, ElectionForm, PositionForm, VotePasswordForm, VotingForm
+from app.constants import eStatus
 
 # I WILL ADD COMMENTS LATER
 
@@ -139,6 +140,19 @@ def update_election(link):
         election.password = str(form.password.data).lower()
 
         db.session.commit()
+
+        # the scheduler
+        try:
+            # remove the previous scheduled event then recreate with form data
+            scheduler.remove_job(id="start " + election.name)
+            scheduler.add_job(id="start " + election.name, func=schedule_job,
+                                trigger='date', run_date=form.starting_at.data, args=[election.id])
+            # remove the previous scheduled event then recreate with form data
+            scheduler.remove_job(id="end " + election.name)
+            scheduler.add_job(id="end " + election.name, func=schedule_job,
+                                trigger='date', run_date=form.ending_at.data, args=[election.id])
+        except Exception as e:
+            print(str(e))
 
         flash(f'Election has been updated succesfully', 'success')
 
@@ -557,11 +571,11 @@ def missing_route():
 def schedule_job(id):
     election = Election.query.get(id)
     # if election status is pending set to started
-    if election.status_id == 1:
-        election.status_id = 2
+    if election.status_id == eStatus.PENDING.value:
+        election.status_id = eStatus.STARTED.value
     # if election status is started set to ended
-    elif election.status_id == 2:
-        election.status_id = 3
+    elif election.status_id == eStatus.STARTED.value:
+        election.status_id = eStatus.ENDED.value
     try:
         db.session.commit()
     except Exception as e:
