@@ -56,3 +56,33 @@ header {
 .progressbar li.active + li:after {
   background-color: #55b776;
 }
+
+.voting-label {
+  display: block;
+  width: 400px;
+}
+.voting-label > input {
+  /* HIDE RADIO */
+  visibility: hidden; /* Makes input not-clickable */
+  position: absolute; /* Remove input from document flow */
+}
+.voting-label > input + span {
+  /* DIV STYLES */
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.voting-label > input:checked + span {
+  /* (RADIO CHECKED) DIV STYLES */
+  background-color: #ffd6bb;
+  border: 1px solid #ff6600;
+}
+
+.btn.vote-option {
+  border: 1px solid #212529 !important;
+  color: #212529 !important;
+}
+
+.btn-check:checked + .btn.vote-option {
+  border: 2px solid #198754 !important;
+  color: white !important;
+}

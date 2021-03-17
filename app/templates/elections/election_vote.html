@@ -1,25 +1,34 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<form action="{{ url_for('election_vote', link=election.link) }}" method="POST" >
+<form action="{{ url_for('election_vote', link=election.link) }}" method="POST">
     {{ form.hidden_tag() }}
     {% for position in positions %}
-        <h4>{{ position.title }}</h4>
-        {% for candidate in position.candidates %}
-            <p>
-            <input type="radio" name="{{ position.title }}" value="{{ candidate.id }}"> {{ candidate.name }} <br>
-            </p>    
-        {% endfor %}
+    <h4>{{ position.title }}</h4>
+    {% for candidate in position.candidates %}
+    <input type="{{'radio' if position.candidates.count() > 1 else 'checkbox'}}" class="btn-check"
+           id="radio-{{ position.id }}-{{ candidate.id }}" autocomplete="off"
+           name="p-{{ position.election.id }}-{{ position.id }}" value="{{ candidate.id }}">
 
-        <!-- {{ form.candidates }} -->
+    <label class="bg-gradient btn btn-outline-success d-block text-start vote-option"
+           for="radio-{{ position.id }}-{{ candidate.id }}">
+        <p class="h5">
+            {{ candidate.name }}
+        </p>
+        <p>
+            {{ candidate.bio }}
+        </p>
+    </label><br>
+    {% endfor %}
 
-        {% for field, errors in form.errors.items() %}
-        <div class="alert alert-error">
-            {{ form[field].label }}: {{ ', '.join(errors) }}
-        </div>
-        {% endfor %}
+
+    {% for field, errors in form.errors.items() %}
+    <div class="alert alert-error">
+        {{ form[field].label }}: {{ ', '.join(errors) }}
+    </div>
+    {% endfor %}
     {% endfor %}
     <!-- <p>{{ form.submit() }}</p> -->
-    <br><input type="submit" value="Vote" />
+    <br><input type="submit" class="btn btn-success" value="Vote" />
 </form>
 {% endblock %}

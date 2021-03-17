@@ -2,46 +2,60 @@
 
 {% block content %}
 <div>
-    <span style="border: 2px solid goldenrod">Election</span>
-    <h1>{{ election.name }} <small style="color:goldenrod"> status: {{ election.status.name }} </small> </h1>
+
+    <div class="mt-2">
+        <span class="badge badge-lg rounded-pill" style="border: 2px solid goldenrod; color: goldenrod">Election</span>
+        <span class="badge badge-lg bg-success bg-gradient rounded-pill"> status: {{ election.status.name }}
+        </span>
+    </div>
+
+    <h1>{{ election.name }} <button id="copy-election-link" class="btn btn-primary"
+                data-clipboard-text="{{ url_for('voting_pass_link', link=election.link, _external=True) }}"
+                onclick="copy('copy-election-link')">Share</button> </h1>
     <p>
         {{ election.description or 'No description' }}
     </p> <!-- TODO: we will change this to a package later -->
-    <h3 id="urlText" style="color: lime;background-color: lightblue;"><a
-           href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Vote Link</a> <button
-                id="copy-election-link"
-                data-clipboard-text="{{ url_for('voting_pass_link', link=election.link, _external=True) }}"
-                onclick="copy('copy-election-link')">Share</button>
-    </h3>
+
+    <div class="d-flex justify-content-between">
+        <span>
+            Created: {{ election.created_at.strftime('%D - %T %p') }}
+        </span>
+
+        <span>
+            Created by:
+            {{ election.owner.get_name()[0].capitalize() }}
+        </span>
+    </div>
+
     <!-- TODO: copy link will be share link later -->
     {% if election.owner.id == current_user.id %}
-    <a href="{{ url_for('update_election', link=election.link) }}">
-        <button>edit</button>
+    <a class="btn btn-info" href="{{ url_for('update_election', link=election.link) }}">
+        edit
     </a>
-    <a href="{{ url_for('delete_election', link=election.link) }}">
-        <button>delete</button>
+    <a class="btn btn-secondary" href="{{ url_for('delete_election', link=election.link) }}">
+        delete
     </a>
     {% endif %}
     <hr>
 
-    <h4> Created by:
-        {{ election.owner.get_name()[0].capitalize() }}
-        <!-- TODO: Print second name if available, without errors -->
-    </h4>
+    <div class="d-flex justify-content-between">
 
-    <h3>Created: {{ election.created_at }} </h3>
+        <span class="h5 text-success">
+            Starts {{ election.starting_at.strftime('%D - %T %p') }}
+        </span>
 
-    <h3>Scheduled for: {{ election.starting_at }} </h3>
+    </div>
+
+    <h3> </h3>
 
     {% if election.owner.id == current_user.id and statuses %}
     <form action="{{ url_for('change_election_status', link=election.link) }}" method="POST">
         <!-- status -->
         {% for s in statuses %}
-        <label>
-            <input onchange="this.form.submit();" type="radio" name="status" value="{{ s.id }}" {{ 'checked' if
-                   election.status.id==s.id }}> {{ s.name
-            }}
-        </label><br>
+
+        <input class="btn-check" autocomplete="off" id="status-{{ s.id }}" onchange="this.form.submit();" type="radio"
+               name="status" value="{{ s.id }}" {{ 'checked' if election.status.id==s.id }}>
+        <label class="btn btn-outline-success" for="status-{{ s.id }}">{{ s.name }}</label>
         {% endfor %}
     </form>
 
@@ -55,96 +69,83 @@
     <div id="status_change_response"></div>
     {% endif %}
 
-    <a href="{{ url_for('new_position', link=election.link) }}"><button>Add Position</button> </a>
+    {% if election.status.name == 'started' %}
+    <a class="btn btn-success d-block btn-lg my-3"
+           href="{{ url_for('voting_pass_link', link=election.link, _external=True) }}">Vote</a>
+   
+    {% endif %}
+
+    <div class="d-flex justify-content-between my-3">
+
+        <h4>{{'Positions' if election.status.name != 'ended' else 'Results'}}</h4>
+
+
+        <div class="float-right float-end">
+
+            {% if election.status.name == 'ended' %}
+            <button class="btn btn-success" id="copy-election-results-link"
+                    data-clipboard-text="{{ url_for('election', link=election.link, _external=True) }}#results"
+                    onclick="copy('copy-election-results-link')">Share</button>
+            {% endif %}
+
+            <a href="{{ url_for('new_position', link=election.link) }}"><button class="btn btn-info">Add Position +
+                </button> </a>
+        </div>
+    </div>
+
+    {% if position.results.count() > 0 %}
+    <h5>Last Updated: {{ election.positions[0].results[0].modified_at.strftime('%D - %T %p') }} </h5>
+    {% endif %}
+
+
 
     <!-- TODO: show candidates here too! -->
     {% if election.positions %}
-    <h4>Positions</h4>
-    <table style="border: 1px solid green">
-        {% for p in election.positions %}
-        <tr>
-            <td colspan="3">
-                <a href="{{ url_for('position', link=election.link,position_id=p.id) }}">
-                    <h3>{{ p.title }}</h3>
-                </a>
-            </td>
-            <td>
-                <a href="{{ url_for('new_candidate', link=election.link, position_id=p.id) }}">
-            </td>
-        </tr>
-        <tr>
-            <th>
-                Name
-            </th>
-            <th>
-                Votes
-            </th>
-            <th>
-                IDK
-            </th>
-        </tr>
-        {% for c in p.candidates %}
-        <tr style="border-bottom:2px solid lightblue">
-            <td>
-                <a href="{{ url_for('candidate', link=election.link,position_id=p.id,candidate_id=c.id) }}">
-                    <h4> {{ c.name }} </h4>
-                </a>
-            </td>
-            <td style="text-align: center;">{{ c.votes.count() }}</td>
-            <td> Yeet</td>
+    <section id="results">
+        <table class="table table-striped">
+            {% for p in election.positions %}
+            <tr class="bg-success bg-gradient">
+                <td colspan="3">
+                    <a class="h3 link-light" href="{{ url_for('position', link=election.link,position_id=p.id) }}">
+                        {{ p.title }}
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ url_for('new_candidate', link=election.link, position_id=p.id) }}">
+                </td>
+            </tr>
+            <tr>
+                <td class="px-0 bg-body" colspan="4">
+                    <table class="table table-bordered mb-0">
+                        <thead>
+                            <th>
+                                Candidate
+                            </th>
+                            <th>
+                                Votes
+                            </th>
+                        </thead>
 
-        </tr>
-        {% endfor %}
-        {% endfor %}
-    </table>
-    {% endif %}
+                        {% for c in p.candidates %}
+                        <tr style="border-bottom:2px solid lightblue">
+                            <td>
+                                <a class="link-dark h4"
+                                   href="{{ url_for('candidate', link=election.link,position_id=p.id,candidate_id=c.id) }}">
+                                    {{ c.name }}
+                                </a>
+                            </td>
+                            <td class="h4">{{ c.votes.count() }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </td>
+            </tr>
 
-    <!-- TODO: we will add better checks later -->
-    {% if election.status.name == 'ended' %}
-    <h3>Results <button id="copy-election-results-link"
-                data-clipboard-text="{{ url_for('election', link=election.link, _external=True) }}#results"
-                onclick="copy('copy-election-results-link')">Share</button></button> </h3>
-    <section id="results" style="height: 300px; width: 100%;background-color: lightblue;">
-        {% if position.results.count() > 0 %}
-        Results will render here
-        <h5>Last Updated: {{ position.results[0].modified_at.strftime('%D - %T %p') }} </h5>
-        <table style="border-collapse: collapse;">
-            <thead style="border: 1px solid darkblue">
-                <th style="border: 1px solid darkblue">
-                    Candidates
-                </th>
-                <th style="border: 1px solid darkblue">
-                    Total Votes
-                </th>
-            </thead>
-
-            <tbody style="border: 1px solid darkblue">
-                {% for p in election.positions %}
-                <tr style="border: 1px solid darkblue; text-align: center;">
-                    <td colspan="2">{{p.title}}</td>
-                </tr>
-                    {% for r in p.results %}
-                    <tr style="border: 1px solid darkblue">
-                        <td style="border: 1px solid darkblue">
-                            {{ r.candidate.name }}
-                        </td>
-                        <td style="border: 1px solid darkblue">
-                            {{ r.total_votes }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                {% endfor %}
-            </tbody>
-
-
+            {% endfor %}
         </table>
-        {% else %}
-        <div>
-            No one has voted :/
-        </div>
-        {% endif %}
     </section>
     {% endif %}
+
 
 </div>
 
