@@ -2,6 +2,7 @@
 
 {% block content %}
 
+{% if election.positions[0].results.all()|length > 0 %}
 <div class="text-center bg-white p-3 card shadow-sm border-info my-5">
     <h4>
         Results from {{ election.name }}
@@ -35,6 +36,7 @@
 
     </div>
 </div>
+{% endif %}
 </div>
 
 <p class="text-center mt-2">
