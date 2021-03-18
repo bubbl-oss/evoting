@@ -1,8 +1,10 @@
+from datetime import datetime, timedelta
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, SelectField, SubmitField, PasswordField, TextAreaField, RadioField
 from wtforms.fields.core import FieldList, FormField
 from wtforms.fields.html5 import DateTimeLocalField
-from wtforms.validators import DataRequired
+from wtforms.validators import DataRequired, ValidationError
 from app.models import Status
 
 
@@ -27,6 +29,17 @@ class ElectionForm(FlaskForm):
         'Number of Voters', validators=[DataRequired()])
     password = StringField('Password')
     submit = SubmitField('Submit')
+
+    def validate_starting_at(form, field):
+        if field.data < datetime.utcnow() :
+            raise ValidationError('Starting date must be greater than current time')
+
+    def validate_ending_at(self, ending_at):
+        if self.starting_at.data > self.ending_at.data:
+            self.ending_at.errors.append('Ending time must be greater than starting time')
+            return False
+        else:
+            return True
 
 
 class PositionForm(FlaskForm):

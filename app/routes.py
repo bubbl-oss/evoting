@@ -8,6 +8,7 @@ from sqlalchemy import func
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Position, Type, User, Election, Status, Candidate, Vote, Result
 from app.forms import CandidateForm, ElectionForm, PositionForm, VotePasswordForm, VotingForm
+from app.constants import eStatus
 
 # I WILL ADD COMMENTS LATER
 
@@ -93,11 +94,11 @@ def new_election():
             try:
                 # schedule them to run the schuled_job method at their starting datetime
                 # notice the change to the id as you requested
-                scheduler.add_job(id="start " + election.name, func=schedule_job,
+                scheduler.add_job(id="start " + election.id, func=schedule_job,
                                   trigger='date', run_date=election.starting_at, args=[election.id])
                 # schedule the jobs to run the schuled_job method at their ending datetime
                 # notice the change to the id as you requested
-                scheduler.add_job(id="end " + election.name, func=schedule_job,
+                scheduler.add_job(id="end " + election.id, func=schedule_job,
                                   trigger='date', run_date=election.ending_at, args=[election.id])
             except Exception as e:
                 print(str(e))
@@ -143,6 +144,19 @@ def update_election(link):
 
         db.session.commit()
 
+        # the scheduler
+        try:
+            # remove the previous scheduled event then recreate with form data
+            scheduler.remove_job(id="start " + election.id)
+            scheduler.add_job(id="start " + election.id, func=schedule_job,
+                                trigger='date', run_date=form.starting_at.data, args=[election.id])
+            # remove the previous scheduled event then recreate with form data
+            scheduler.remove_job(id="end " + election.id)
+            scheduler.add_job(id="end " + election.id, func=schedule_job,
+                                trigger='date', run_date=form.ending_at.data, args=[election.id])
+        except Exception as e:
+            print(str(e))
+
         flash(f'Election has been updated succesfully', 'success')
 
         return redirect(url_for('election', link=link))
@@ -187,7 +201,8 @@ def delete_election(link):
     db.session.delete(election)
     db.session.commit()
     flash(f'Election and candidates have been deleted', 'success')
-    return redirect(url_for('index'))
+    # after deleting the user should be redirected to dashboard
+    return redirect(url_for('dashboard')) 
 
 
 @app.route("/elections/<link>/change-status", methods=['POST'])
@@ -600,11 +615,11 @@ def missing_route():
 def schedule_job(id):
     election = Election.query.get(id)
     # if election status is pending set to started
-    if election.status_id == 1:
-        election.status_id = 2
+    if election.status_id == eStatus.PENDING.value:
+        election.status_id = eStatus.STARTED.value
     # if election status is started set to ended
-    elif election.status_id == 2:
-        election.status_id = 3
+    elif election.status_id == eStatus.STARTED.value:
+        election.status_id = eStatus.ENDED.value
     try:
         db.session.commit()
     except Exception as e:
