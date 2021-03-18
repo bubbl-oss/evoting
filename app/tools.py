@@ -21,7 +21,9 @@ def calculate_election_result(election, Result, db):
 # --- Do it for each of the Positions ---
     for p in election.positions:
 
-        if p.candidates.count() > 1:
+        # Was checking if the candidates were greater than 1 before lol... I felt
+        # you should'nt be able to calculate results when candidates is only 1
+        if p.candidates.count() > 0:
             for c in p.candidates:
                 total_votes = c.votes.count()
                 # find the result if it exists and update it!
