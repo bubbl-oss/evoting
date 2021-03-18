@@ -1,5 +1,26 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<h2>You have successfully voted</h2>
+<div class="row">
+    <div class="card text-center shadow-sm border-success col-12 col-md-6 offset-md-3">
+        <p>
+            Awesome!
+        </p>
+        <p>
+            You have successfully voted!
+            Taking you back to your home page...
+        </p>
+
+    </div>
+</div>
+
+<script>
+    window.onload = function () {
+        setTimeout(() => {
+            window.location = '/home';
+            // go back home after 5 secs
+        }, 5000)
+    }
+</script>
+
 {% endblock %}

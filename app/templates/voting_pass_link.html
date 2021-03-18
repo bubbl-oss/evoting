@@ -1,22 +1,26 @@
 {% extends "layouts/base.html" %}
 
 {% block content %}
-<h3>CLICK CONTINUE IF THERE IS NO PASSWORD</h3> 
-<form action="" method="post">
-    {{ form.hidden_tag() }}
-    <p>
-        {{ form.password.label }}<br>
-        {{ form.password(size=10) }}<br>
-        {% for error in form.password.errors %}
-        <span style="color: red;">[{{ error }}]</span>
-        {% endfor %}
-    </p>
-    <p>{{ form.submit() }}</p>
+<div class="row">
+    <div class="text-center card col-12 col-md-6 offset-md-3 shadow-lg p-3 my-md-3">
+        <h3>CLICK CONTINUE IF THERE IS NO PASSWORD</h3>
+        <form action="" method="post">
+            {{ form.hidden_tag() }}
+            <p>
+                {{ form.password.label(class='form-label') }}<br>
+                {{ form.password(size=10, class='form-control') }}<br>
+                {% for error in form.password.errors %}
+                <span style="color: red;">[{{ error }}]</span>
+                {% endfor %}
+            </p>
+            <p>{{ form.submit(class='btn btn-dark') }}</p>
 
-    {% for field, errors in form.errors.items() %}
-    <div class="alert alert-error">
-        {{ form[field].label }}: {{ ', '.join(errors) }}
+            {% for field, errors in form.errors.items() %}
+            <div class="alert alert-error">
+                {{ form[field].label }}: {{ ', '.join(errors) }}
+            </div>
+            {% endfor %}
+        </form>
     </div>
-    {% endfor %}
-</form>
+</div>
 {% endblock %}

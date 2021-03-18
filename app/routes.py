@@ -1,10 +1,14 @@
+from operator import itemgetter
 from flask.helpers import make_response
 from datetime import datetime
+
+from sqlalchemy.sql.expression import or_
 
 from app import app, db, scheduler
 import uuid
 from flask import render_template, request, url_for, redirect, jsonify, flash
 from sqlalchemy import func
+from app.constants import eStatus
 from flask_login import current_user, login_user, login_required, logout_user
 from app.models import Position, Type, User, Election, Status, Candidate, Vote, Result
 from app.forms import CandidateForm, ElectionForm, PositionForm, VotePasswordForm, VotingForm
@@ -59,11 +63,13 @@ def login_complete():
 @app.route("/home")
 @login_required
 def dashboard():
-    # get all elections that have this status. pending
-    status = Status.query.get(1)
-    elections = Election.query.with_parent(
-        status).all()  # all elections in the system
+    # get all elections that have this status. pending or status Started
+
+    # all elections in the system
+    elections = Election.query.filter_by(status_id=eStatus.PENDING.value).all()
     user_elections = current_user.elections.all()  # all user elections
+    type(user_elections)
+    type(elections)
     return render_template("dashboard.html", title="User Home", elections=elections, user_elections=user_elections)
 
 
@@ -228,6 +234,28 @@ def change_election_status(link):
 
     flash(f'Election status has been changed to {status.name}', 'success')
     return redirect(url_for('election', link=election.link))
+
+
+@app.route("/elections/<link>/results", methods=['GET', 'POST'])
+def election_result(link):
+    election = Election.query.filter_by(link=link).first()
+
+    if election is None or election.status_id != eStatus.ENDED.value:
+        flash(f'Not yet finished or does not exist!', 'danger')
+        return redirect(url_for('missing_route'))
+
+    result_tally = {}
+
+    for p in election.positions:
+        p_data = {"votes": [(r.candidate.id, r.total_votes)
+                            for r in p.results]}
+        p_data["max"] = None if len(p_data["votes"]) == 0 else max(
+            p_data["votes"], key=itemgetter(1))
+        result_tally[f"{p.id}"] = p_data
+
+    # done! Thank you Jesus now, find the max for each position :)
+
+    return render_template('elections/results.html', title=election.name, election=election, result_tally=result_tally)
 
 
 @app.route("/elections/<link>/positions/new", methods=['GET', 'POST'])
@@ -462,6 +490,13 @@ def delete_candidate_http(link):
 def voting_pass_link(link):
     election = Election.query.filter_by(link=link).first()
     # check if the status of the election is not started; if yes redirect to error 404 could we create flash messages for errors???
+    # if the user already has the cookie
+    cookie = request.cookies.get('evoting-user-can-vote')
+    if cookie and int(cookie) == election.id:
+        # user is not authenticated for this election and needs to enter password
+        flash(f'Happy voting!', 'success')
+        return redirect(url_for('election_vote', link=link))
+
     if election.status.name != "started":
         flash(f'The election hasnt started yet chill bro.................or sis', 'danger')
         return redirect(url_for('missing_route'))
@@ -495,7 +530,7 @@ def election_vote(link):
     election = Election.query.filter_by(link=link).first()
 
     cookie = request.cookies.get('evoting-user-can-vote')
-    if cookie is None:
+    if cookie is None or int(cookie) != election.id:
         # user is not authenticated for this election and needs to enter password
         flash(f'Login to Election to vote', 'error')
         return redirect(url_for('voting_pass_link', link=link))
@@ -516,18 +551,19 @@ def election_vote(link):
                 db.session.delete(user_vote)
                 db.session.commit()
 
-        # check if the total election votes is more than or equal to the number of voters; 
+        # check if the total election votes is more than or equal to the number of voters;
         # if yes redirect to vote_limit message
         for p in election.positions.all():
             if p.votes.count() >= int(election.number_of_voters):
                 return redirect(url_for('vote_limit', link=link))
 
         for position in positions:
-            voted = request.form[str(position.title)]
+            voted = request.form[str(
+                f"p-{ position.election.id }-{ position.id }")]
             voted_candidate = Candidate.query.filter_by(id=voted).first()
             vote = Vote(user=current_user, position=position,
                         candidate=voted_candidate)
-        
+
             print(vote)
             db.session.add(vote)
         db.session.commit()
