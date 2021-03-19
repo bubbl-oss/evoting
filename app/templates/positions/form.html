@@ -3,7 +3,9 @@
 {% block content %}
 <div class="my-3">
     <h4> {{ 'New' if request.endpoint == 'new_position' else 'Update' }} Position</h4>
+    {% if request.endpoint == 'update_position' %}
     <h5 class="text-success italic"> {{ position.election.name }} </h5>
+    {% endif %}
 </div>
 
 

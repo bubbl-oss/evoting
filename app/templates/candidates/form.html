@@ -3,8 +3,8 @@
 {% block content %}
 <div class="my-3">
     <h4> {{ 'New' if request.endpoint == 'new_candidate' else 'Update' }} Candidate</h4>
-    <h5 class="text-success italic"> {{ 'Add a ' if request.endpoint == 'new_candidate' else 'Update this ' }} <u>{{
-            candidate.position.title }}</u> Candidate</h5>
+    <h5 class="text-success italic"> {{ 'Add a new candidate' if request.endpoint == 'new_candidate' else 'Update this
+        candidate' }} </h5>
 </div>
 
 {% if request.args.get('first_candidate') %}
